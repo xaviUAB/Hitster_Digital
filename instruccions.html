@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instruccions HITSTER DIGITAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+        }
+        /* Estil per a llistes i codi */
+        .instruction-list li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="text-white flex flex-col items-center py-8">
+
+    <div class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-xl mx-4">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-green-400">Instruccions d'ús</h1>
+            <p class="text-gray-400 mt-2">Guia per al Hitster Digital</p>
+        </header>
+
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 text-yellow-400">1. Com funciona?</h2>
+            <p class="text-gray-300">
+                Aquesta aplicació digital reprodueix el concepte bàsic del joc Hitster: escoltes una cançó i has d'endevinar l'any per col·locar-la correctament a la teva línia de temps.
+            </p>
+            <ol class="instruction-list list-decimal list-inside text-gray-300 mt-4 ml-4">
+                <li>Selecciona el tipus de compte Spotify que utilitzaràs (Premium o Gratuït).</li>
+                <li>Tria les categories de cançons que vols incloure.</li>
+                <li>Prem **"Nou Hit"** per carregar una cançó aleatòria.</li>
+                <li>Escolta la cançó i intenta endevinar l'any.</li>
+                <li>Prem **"Mostrar informació"** per veure el títol, l'artista i l'any de publicació.</li>
+                <li>Continua prement **"Nou Hit"** fins que s'acabin les cançons de les categories seleccionades.</li>
+            </ol>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 text-green-400">2. Pujar Fitxers de Cançons</h2>
+            <p class="text-gray-300 mb-4">
+                Pots carregar els teus propis llistats de cançons. El fitxer ha de ser un **CSV** (o TXT) i utilitzar el punt i coma (<code class="bg-gray-700 px-1 rounded text-white">;</code>) com a delimitador.
+            </p>
+            
+            <h3 class="text-lg font-medium mb-2 text-white">Format Requerit:</h3>
+            <p class="text-sm text-gray-400 mb-2">
+                Assegura't que cada línia (cançó) contingui exactament aquestes quatre columnes, separades per <code class="bg-gray-700 px-1 rounded text-white">;</code>:
+            </p>
+            
+            <pre class="bg-gray-700 p-3 rounded-lg text-sm overflow-auto mb-4"><code>URI de Spotify; Títol de la cançó; Artista; Any o Data; Categoria</code></pre>
+            
+            <h3 class="text-lg font-medium mb-2 text-white">Exemple:</h3>
+            <pre class="bg-gray-700 p-3 rounded-lg text-sm overflow-auto"><code>spotify:track:1abc234; Bohemian Rhapsody; Queen; 1975-10-31; Hits Classics</code></pre>
+            
+            <ul class="list-disc list-inside text-gray-400 mt-3 ml-4 text-sm">
+                <li>La **URI de Spotify** és essencial per a la reproducció.</li>
+                <li>L'**Any o Data** ha de contenir els quatre dígits de l'any.</li>
+                <li>El nom del fitxer sense l'extensió es convertirà automàticament en la **Categoria** de les cançons.</li>
+            </ul>
+        </section>
+        
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 text-yellow-400">3. Selecció de Compte Spotify</h2>
+            <p class="text-gray-300">
+                La teva elecció afecta quin fragment de la cançó es carrega per a la prova:
+            </p>
+            <div class="space-y-3 mt-4">
+                <div class="bg-gray-700 p-3 rounded-lg">
+                    <p class="font-bold text-green-400">Compte Premium:</p>
+                    <p class="text-sm text-gray-300">La cançó es carregarà començant al voltant del minut **1:00** per escoltar el tros intermedi.</p>
+                </div>
+                <div class="bg-gray-700 p-3 rounded-lg">
+                    <p class="font-bold text-yellow-400">Compte Gratuït:</p>
+                    <p class="text-sm text-gray-300">La cançó es carregarà començant al voltant del segon **0:00** (el començament), com és habitual en les previsualitzacions.</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+                <span class="font-semibold">Nota:</span> En ambdós casos, només escoltaràs una petita previsualització (normalment 30 segons) per les limitacions dels reproductors incrustats de Spotify.
+            </p>
+        </section>
+
+        <footer class="text-center text-gray-500 text-xs mt-6 pt-4 border-t border-gray-700">
+            <p>Aquesta eina està pensada per complementar l'experiència de joc de Hitster i no està afiliada a Spotify o al joc original.</p>
+        </footer>
+    </div>
+</body>
+</html>
