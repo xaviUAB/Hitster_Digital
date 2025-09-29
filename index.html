@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HITSTER DIGITAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;500;600;700&display=swap" rel="stylesheet">
     <style>
         html {
             /* Força la barra de desplaçament vertical per evitar salts de disseny */
@@ -61,7 +61,8 @@
         <div id="upload-section" class="my-4 w-full space-y-2 flex flex-col">
             <input type="file" id="file-input" accept=".csv,.txt" multiple class="hidden"/>
             
-            <button id="upload-button" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg transition duration-300 ease-in-out">
+            <!-- Botó amb fons gris fosc, text blanc (igual que les categories no seleccionades) -->
+            <button id="upload-button" class="w-full bg-gray-700/50 hover:bg-gray-700 text-white py-2.5 px-4 rounded-lg transition duration-300 ease-in-out">
                 Pujar Fitxer(s) CSV/TXT
             </button>
             
@@ -1010,7 +1011,8 @@ spotify:track:1gkBsKxTpVHIn1nLf05CUo;Peter Pan;El Canto Del Loco;2008;Temacles
 spotify:track:6QgjcU0zLnzq5OrUoSZ3OK;Feel It Still;Portugal. The Man;2017;Temacles
 spotify:track:41nv6To7wnoVnFJSb1FF36;Escapar (Slipping Away) (feat. Amaral) - 2006 Remastered Version;Moby, Amaral;2006;Temacles
 spotify:track:0pqnGHJpmpxLKifKRmU6WP;Believer;Imagine Dragons;2017;Temacles
-spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson, Bruno Mars;2015;Temacles`;
+spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson, Bruno Mars;2015;Temacles
+`;
 
         // --- Estat de l'aplicació ---
         let errorTimeout;
@@ -1136,7 +1138,8 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                     // Actualitzar el recompte total amb les noves cançons
                     totalTracksCountByCategory[categoryName] = (totalTracksCountByCategory[categoryName] || 0) + newTracks.length;
                     
-                    // 2. Marquem la nova categoria com a seleccionada per defecte si no ho estava (com el que vol l'usuari)
+                    // 2. Marquem la nova categoria com a seleccionada per defecte si no ho estava 
+                    //    (Això es manté per als fitxers pujats, però el resetGame l'esborrarà)
                     if (!selectedCategoriesOnLoad.includes(categoryName)) {
                         selectedCategoriesOnLoad.push(categoryName);
                     }
@@ -1157,6 +1160,34 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             fileInput.value = ''; 
         }
         
+        /** * Actualitza l'estil d'una etiqueta (label) segons si el seu checkbox 
+         * està marcat o no.
+         */
+        function updateCategoryStyle(labelElement) {
+            const checkbox = labelElement.querySelector('input[type="checkbox"]');
+            const span = labelElement.querySelector('span');
+            
+            if (checkbox.checked) {
+                // Estil Seleccionat: Fons verd, Text negre, Text en negreta
+                labelElement.classList.remove('bg-gray-700/50', 'text-white', 'hover:bg-gray-700');
+                labelElement.classList.add('bg-green-500', 'text-gray-900', 'hover:bg-green-600', 'shadow-md');
+                span.classList.add('font-bold'); // AFegir NEGRETA
+                
+                // Assegurem que el checkbox també sigui visible si hi ha estil de fons fosc
+                checkbox.classList.remove('text-green-500');
+                checkbox.classList.add('text-gray-900');
+            } else {
+                // Estil per Defecte: Fons gris fosc, Text blanc, Text normal
+                labelElement.classList.remove('bg-green-500', 'text-gray-900', 'hover:bg-green-600', 'shadow-md');
+                labelElement.classList.add('bg-gray-700/50', 'text-white', 'hover:bg-gray-700');
+                span.classList.remove('font-bold'); // Treure NEGRETA
+                
+                checkbox.classList.remove('text-gray-900');
+                checkbox.classList.add('text-green-500');
+            }
+        }
+
+
         /** Renderitza la secció de selecció de categories */
         function renderCategorySelectionSection() {
             // Assegurem que l'estat és de selecció
@@ -1182,24 +1213,30 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                 // Ús de la variable global totalTracksCountByCategory
                 const count = totalTracksCountByCategory[category] || 0; 
                 
-                // Si la categoria està en l'array selectedCategoriesOnLoad (que ara només conté les pujades o les seleccionades prèviament)
-                const isChecked = selectedCategoriesOnLoad.includes(category) ? 'checked' : '';
+                // Si la categoria està en l'array selectedCategoriesOnLoad, es marca
+                const isChecked = selectedCategoriesOnLoad.includes(category);
+                
+                // Definim les classes inicials. Es tria l'estil per defecte, que s'actualitzarà després
+                const baseClasses = 'flex items-center cursor-pointer p-2 text-sm sm:text-base rounded-lg transition duration-150';
+                
+                // Les classes específiques seran aplicades per updateCategoryStyle()
                 
                 // Afegir el recompte al costat del nom de la categoria
                 const displayCategory = `${category} (${count})`;
 
                 categoryCheckboxes += `
-                    <label class="inline-flex items-center cursor-pointer m-1 text-sm sm:text-base">
-                        <input type="checkbox" name="category" value="${category}" class="form-checkbox text-green-500 focus:ring-green-500 rounded" ${isChecked}>
+                    <label class="category-label ${baseClasses}" data-category="${category}">
+                        <input type="checkbox" name="category" value="${category}" class="form-checkbox focus:ring-green-500 rounded" ${isChecked ? 'checked' : ''}>
                         <span class="ml-2">${displayCategory}</span>
                     </label>
                 `;
             });
 
+            // Ús de grid grid-cols-2 i gap-3 per crear la disposició de dues columnes
             dynamicContentContainer.innerHTML = `
                 <div class="py-4 w-full">
-                    <p class="text-sm text-gray-400 text-center mb-2">Tria les categories:</p>
-                    <div class="flex justify-center flex-wrap">
+                    <p class="text-sm text-gray-400 text-center mb-4">Tria una o més categories</p>
+                    <div id="category-grid" class="grid grid-cols-2 gap-3 px-2 sm:px-4">
                         ${categoryCheckboxes}
                     </div>
                 </div>
@@ -1210,12 +1247,26 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
 
 
             const checkboxes = document.querySelectorAll('input[name="category"]');
+            const labels = document.querySelectorAll('.category-label');
+
             const updateButtonState = () => {
                 const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
                 nouHitButton.disabled = !anyChecked;
             };
-            checkboxes.forEach(cb => cb.addEventListener('change', updateButtonState));
-            updateButtonState();
+            
+            // Aplica els estils inicials i afegeix l'esdeveniment de canvi
+            labels.forEach(label => {
+                // Apliquem l'estil basat en l'estat inicial (selectedCategoriesOnLoad)
+                updateCategoryStyle(label);
+                
+                // Afegim l'esdeveniment per canviar l'estil i l'estat del botó en temps real
+                label.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+                    updateCategoryStyle(label);
+                    updateButtonState();
+                });
+            });
+
+            updateButtonState(); // Estat inicial del botó
         }
         
         /** Reinicia l'estat del joc per tornar a la selecció de categories */
@@ -1224,6 +1275,9 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             categoriesLocked = false;
             availableTracks = [];
             currentTrack = null;
+            
+            // [MODIFICACIÓ] Esborrem les categories seleccionades per assegurar que cap checkbox estigui marcat.
+            selectedCategoriesOnLoad = [];
             
             // Re-activem els botons de pujada
             uploadButton.classList.remove('hidden'); 
@@ -1244,7 +1298,8 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             currentTrack = availableTracks[randomIndex];
             
             const trackId = currentTrack.uri.split(':').pop();
-            const urlToLoad = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&autoplay=1`;
+            // Línia modificada: Utilitza 't=60' per començar al segon 60. Nota: El reproductor de Spotify incrustat (iframe) pot ignorar aquest paràmetre ('start' o 't') a causa de restriccions d'autoplay o del navegador.
+            const urlToLoad = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&autoplay=1&t=60`;
             
             const iframe = document.createElement('iframe');
             iframe.style.borderRadius = '12px';
@@ -1449,7 +1504,7 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                 return acc;
             }, {});
 
-            // AJUSTAT: Inicialment, la selecció de categories és buida. L'usuari ha de marcar-les manualment.
+            // Lògica de selecció de categories: comença buida
             selectedCategoriesOnLoad = [];
 
             loadedFileNames = ['Dades Internes'];
