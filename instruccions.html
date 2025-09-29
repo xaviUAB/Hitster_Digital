@@ -35,15 +35,41 @@
                 <li>Tria les categories de cançons que vols incloure.</li>
                 <li>Prem **"Nou Hit"** per carregar una cançó aleatòria.</li>
                 <li>Escolta la cançó i intenta endevinar l'any.</li>
-                <li>Prem **"Mostrar informació"** per veure el títol, l'artista i l'any de publicació.</li>
-                <li>Continua prement **"Nou Hit"** fins que s'acabin les cançons de les categories seleccionades.</li>
+                <li>Prem "Mostrar informació" per veure el títol, l'artista i l'any de publicació.</li>
+                <li>Continua prement "Nou Hit" fins que s'acabin les cançons de les categories seleccionades.</li>
             </ol>
         </section>
 
+		<section class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 text-green-400">2. El joc</h2>
+            
+            <ol class="instruction-list list-decimal list-inside text-gray-300 mt-4 ml-4">
+                <li>L'objectiu del joc és aconseguir construir una línea de temps amb 10 cançons.</li>
+				<br>
+				<li>Cada jugador comença el joc amb 2 fitxes Hitster (poden ser monedes o qualsevol altre objecte).</li>
+				<br>
+				<li>Per començar, tots els participants escriuran un any en un paperet que serà l'inici de la seva línea de temps. Aquest any pot ser comú a tots o utilitzar la aplicació per generar tantes cançons aleatòries com jugadors i assignar l'any de les cançons als jugadors.</li>
+                <br>
+				<li>El primer jugador farà "Nou hit" i escoltarà la cançó. Haurà de decidir si la cançó que sona és anterior o posterior a l'any que té sobre la taula.</li>
+				<br><li>Revelarà la solució amb "Mostrar Informació". Si l'encerta, escriurà l'any i el colocarà en la posició correcta. Si no, no ha de fer res. Sigui com sigui, serà el torn del seguent jugador/a.</li>
+				<br><li>El primer jugador en aconseguir una línea de temps amb 10 anys, guanya.</li>
+				<br>
+				<h3 class="text-lg font-medium mb-2 text-white">Ús de le fitxes hitster:</h3>
+				<li>En el teu torn, pots gastar una fitxa Hitster per saltar a la seguent cançó</li>
+				<br><li>En el torn d'una altre jugador, si creus que s'equivoca, abans de revelar l'any, pot cridar "Hitster". Coloca la fitxa en la seva línea de temps, en la posició que creus correcta. Si l'encertes, podràs escriure l'any de la cançó en un dels teus paperets i posar-la en la teva línea de temps en el lloc corresponent.</li>
+                <br><li>Es poden guanyar fitxes Hitster si, en el teu torn, a més de colocar l'any correctament, encertes elnom de la cançó i l'intèrpret.</li>
+				<br><li>No es poden acumular més de 5 fitxes Hitster.</li>
+				
+             </ol>
+			<br>
+			<p>Nota: <a href="https://hitstergame.com/es-es/como-jugar/">Les instruccions del joc original estàn disponibles a la seva web.</a></p>
+        </section>
+
+		
         <section class="mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 text-green-400">2. Pujar Fitxers de Cançons</h2>
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 text-yellow-400">3. Pujar Fitxers de Cançons</h2>
             <p class="text-gray-300 mb-4">
-                Pots carregar els teus propis llistats de cançons. El fitxer ha de ser un **CSV** (o TXT) i utilitzar el punt i coma (<code class="bg-gray-700 px-1 rounded text-white">;</code>) com a delimitador.
+                Pots carregar els teus propis llistats de cançons. El fitxer ha de ser un CSV (o TXT) i utilitzar el punt i coma (<code class="bg-gray-700 px-1 rounded text-white">;</code>) com a delimitador.
             </p>
             
             <h3 class="text-lg font-medium mb-2 text-white">Format Requerit:</h3>
@@ -51,40 +77,41 @@
                 Assegura't que cada línia (cançó) contingui exactament aquestes quatre columnes, separades per <code class="bg-gray-700 px-1 rounded text-white">;</code>:
             </p>
             
-            <pre class="bg-gray-700 p-3 rounded-lg text-sm overflow-auto mb-4"><code>URI de Spotify; Títol de la cançó; Artista; Any o Data; Categoria</code></pre>
+            <pre class="bg-gray-700 p-3 rounded-lg text-sm overflow-auto mb-4"><code>URI de Spotify; Títol de la cançó; Artista; Any o Data</code></pre>
             
             <h3 class="text-lg font-medium mb-2 text-white">Exemple:</h3>
-            <pre class="bg-gray-700 p-3 rounded-lg text-sm overflow-auto"><code>spotify:track:1abc234; Bohemian Rhapsody; Queen; 1975-10-31; Hits Classics</code></pre>
+            <pre class="bg-gray-700 p-3 rounded-lg text-sm overflow-auto"><code>spotify:track:1abc234; Bohemian Rhapsody; Queen; 1975-10-31</code></pre>
             
             <ul class="list-disc list-inside text-gray-400 mt-3 ml-4 text-sm">
-                <li>La **URI de Spotify** és essencial per a la reproducció.</li>
-                <li>L'**Any o Data** ha de contenir els quatre dígits de l'any.</li>
-                <li>El nom del fitxer sense l'extensió es convertirà automàticament en la **Categoria** de les cançons.</li>
+                <li>La URI de Spotify és essencial per a la reproducció.</li>
+                <li>L'Any o Data ha de contenir, al menys, els quatre dígits de l'any.</li>
+                <li>El nom del fitxer CSV (sense l'extensió) es convertirà automàticament en la categoria de les cançons.</li>
             </ul>
         </section>
         
         <section class="mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 text-yellow-400">3. Selecció de Compte Spotify</h2>
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 text-green-400">4. Selecció de Compte Spotify</h2>
             <p class="text-gray-300">
                 La teva elecció afecta quin fragment de la cançó es carrega per a la prova:
             </p>
             <div class="space-y-3 mt-4">
                 <div class="bg-gray-700 p-3 rounded-lg">
                     <p class="font-bold text-green-400">Compte Premium:</p>
-                    <p class="text-sm text-gray-300">La cançó es carregarà començant al voltant del minut **1:00** per escoltar el tros intermedi.</p>
+                    <p class="text-sm text-gray-300">La cançó es carregarà començant al voltant del minut 1:00 per escoltar el tros intermedi.</p>
                 </div>
                 <div class="bg-gray-700 p-3 rounded-lg">
                     <p class="font-bold text-yellow-400">Compte Gratuït:</p>
-                    <p class="text-sm text-gray-300">La cançó es carregarà començant al voltant del segon **0:00** (el començament), com és habitual en les previsualitzacions.</p>
+                    <p class="text-sm text-gray-300">Spotify llençarà un fragment de la cançó. Si marques "Gratuït" però tens compte Premium, la cançó començarà a sonar des de l'inici.</p>
                 </div>
             </div>
             <p class="text-sm text-gray-400 mt-4">
-                <span class="font-semibold">Nota:</span> En ambdós casos, només escoltaràs una petita previsualització (normalment 30 segons) per les limitacions dels reproductors incrustats de Spotify.
+                <span class="font-semibold">Nota:</span>Segons la política que estigui aplicant Spotify, es possible que, en ambdós casos, no escoltis tota la cançó per les limitacions que s'apliquen als reproductors incrustats.
             </p>
         </section>
 
         <footer class="text-center text-gray-500 text-xs mt-6 pt-4 border-t border-gray-700">
-            <p>Aquesta eina està pensada per complementar l'experiència de joc de Hitster i no està afiliada a Spotify o al joc original.</p>
+            <p>Aquesta eina està pensada per complementar l'experiència de joc de Hitster i no està afiliada ni a Spotify ni al joc original.</p>
+			<p>Si t'agrada, compra el joc original per donar suport als creadors.</p>
         </footer>
     </div>
 </body>
