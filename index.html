@@ -86,6 +86,7 @@
         const uploadSection = document.getElementById('upload-section');
 
         // --- Dades de les cançons del fitxer CSV ---
+        // S'ha afegit un exemple amb un format d'any més complex per provar la nova lògica (e.g., Jeanette)
         const csvData = `Spotify;Titol;Cantant;Any;Tipus
 spotify:track:1or7R43FPk2oyNed5oTeOJ;Saca el guisky cheli;Desmadre 75;1998;Bàsic
 spotify:track:7o2CTH4ctstm8TNelqjb51;Sweet Child O' Mine;Guns N' Roses;1987;Bàsic
@@ -1088,7 +1089,10 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                             const title = cleanedParts[1]; 	 
                             const artist = cleanedParts[2]; 	 
                             const yearData = cleanedParts[3]; 
-                            const year = yearData.substring(0, 4);
+                            
+                            // NOU: Lògica per extreure els 4 dígits consecutius
+                            const yearMatch = yearData.match(/\d{4}/);
+                            const year = yearMatch ? yearMatch[0] : 'N/A';
 
                             if (uri && title) {
                                 tracks.push({
@@ -1248,7 +1252,8 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             iframe.onload = () => {
                 nouHitButton.classList.add('hidden');
                 mostrarInfoButton.classList.remove('hidden');
-                nouHitButton.disabled = false; 
+                // Al reproductor, deixem que 'Nou Hit' estigui amagat i 'Mostrar informació' visible.
+                // La lògica de l'estat del botó es gestiona a handleNouHitClick/handleMostrarInfoClick
             };
             
             iframe.onerror = () => {
@@ -1284,14 +1289,27 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                 }
                 
                 categoriesLocked = true;
+                // Amaguem el botó de pujar fitxer un cop iniciat el joc
                 uploadButton.classList.add('hidden'); 
                 
-                // Neteja l'estat d'ocultació de l'anterior contingut (categories) per si de cas
-                dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
-                categoryContainer.classList.remove('opacity-0', 'scale-95');
+                // 1. Iniciem la transició d'ocultació del contingut de categories
+                hideDynamicContent(); 
+                nouHitButton.disabled = true; // Desactivem durant la transició i càrrega
+                
+                // Esperem que la transició visual acabi (300ms)
+                setTimeout(() => {
+                    // 2. Neteja total del contingut un cop s'ha ocultat per mantenir el contenidor buit
+                    dynamicContentContainer.innerHTML = '';
+                    categoryContainer.innerHTML = '';
+                    
+                    // 3. Carreguem la nova pista i el reproductor
+                    loadTrackAndPlayer();
+                    
+                    // Assegurem que les classes de visibilitat es reverteixen (opacity: 100) per quan es mostri la info
+                    dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
+                    categoryContainer.classList.remove('opacity-0', 'scale-95');
+                }, 300);
 
-                nouHitButton.disabled = true;
-                loadTrackAndPlayer();
 
             } else {
                 // TIRADES SUBSEQUENTS: Amaga la info anterior, i carrega el nou hit
@@ -1360,6 +1378,8 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
 
                 mostrarInfoButton.classList.add('hidden');
                 nouHitButton.classList.remove('hidden');
+                // Fent el botó 'Nou Hit' visible, automàticament s'activa per ser clicat.
+                nouHitButton.disabled = false; 
 
             }, 300); // Esperem que la transició d'amagar acabi
         }
@@ -1373,11 +1393,16 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             for (let i = 1; i < lines.length; i++) {
                 const parts = lines[i].split(';');
                 if (parts.length === 5) {
+                    const yearData = parts[3].trim();
+                    // Apliquem la nova lògica d'extracció de l'any a la càrrega inicial
+                    const yearMatch = yearData.match(/\d{4}/);
+                    const year = yearMatch ? yearMatch[0] : 'N/A';
+
                     tracks.push({
                         uri: parts[0].trim(),
                         title: parts[1].trim(),
                         artist: parts[2].trim(),
-                        year: parts[3].trim(),
+                        year: year,
                         category: parts[4].trim(),
                     });
                 }
@@ -1407,4 +1432,4 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
     </script>
 </body>
 </html>
-
+</html>
