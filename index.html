@@ -86,7 +86,6 @@
         const uploadSection = document.getElementById('upload-section');
 
         // --- Dades de les cançons del fitxer CSV ---
-        // S'ha afegit un exemple amb un format d'any més complex per provar la nova lògica (e.g., Jeanette)
         const csvData = `Spotify;Titol;Cantant;Any;Tipus
 spotify:track:1or7R43FPk2oyNed5oTeOJ;Saca el guisky cheli;Desmadre 75;1998;Bàsic
 spotify:track:7o2CTH4ctstm8TNelqjb51;Sweet Child O' Mine;Guns N' Roses;1987;Bàsic
@@ -1021,6 +1020,7 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
         let currentTrack;
         let categoriesLocked = false;
         let selectedCategoriesOnLoad = [];
+        let totalTracksCountByCategory = {}; // Emmagatzema el total de cançons per categoria
 
         /** Mostra el reproductor de Spotify buit */
         function showInitialPlayerMessage() {
@@ -1065,6 +1065,7 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                     const fileContent = event.target.result;
                     const lines = fileContent.trim().split('\n');
                     const tracks = [];
+                    // Extreu el nom del fitxer sense extensió com a categoria
                     const category = file.name.split('.').slice(0, -1).join('.') || file.name;
 
                     if (lines.length <= 1) { 
@@ -1090,7 +1091,7 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                             const artist = cleanedParts[2]; 	 
                             const yearData = cleanedParts[3]; 
                             
-                            // NOU: Lògica per extreure els 4 dígits consecutius
+                            // Lògica per extreure els 4 dígits consecutius
                             const yearMatch = yearData.match(/\d{4}/);
                             const year = yearMatch ? yearMatch[0] : 'N/A';
 
@@ -1120,24 +1121,34 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             uploadButton.disabled = true;
             uploadButton.textContent = 'Processant...';
             
+            // 1. Guardem les categories que ja estaven seleccionades
             selectedCategoriesOnLoad = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(input => input.value);
 
             for (const file of files) {
+                const categoryName = file.name.split('.').slice(0, -1).join('.') || file.name;
+
                 if (loadedFileNames.includes(file.name)) continue;
                 try {
                     const newTracks = await processFile(file);
                     allTracksFromFile.push(...newTracks);
                     loadedFileNames.push(file.name);
+                    
+                    // Actualitzar el recompte total amb les noves cançons
+                    totalTracksCountByCategory[categoryName] = (totalTracksCountByCategory[categoryName] || 0) + newTracks.length;
+                    
+                    // 2. Marquem la nova categoria com a seleccionada per defecte si no ho estava (com el que vol l'usuari)
+                    if (!selectedCategoriesOnLoad.includes(categoryName)) {
+                        selectedCategoriesOnLoad.push(categoryName);
+                    }
                 } catch (error) {
                     console.error("Error llegint el fitxer:", error);
                 }
             }
             
-            // ELIMINAT: fileList.innerHTML = `Fitxers carregats: ${loadedFileNames.join(', ')}`;
-            fileList.innerHTML = ''; // Elimina el missatge de càrrega de fitxers
+            fileList.innerHTML = ''; 
 
             if (allTracksFromFile.length > 0) {
-                // Renderitza les categories immediatament
+                // 3. Renderitza les categories amb les categories noves marcades
                 renderCategorySelectionSection(); 
             }
 
@@ -1163,15 +1174,24 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
             categoryContainer.classList.remove('opacity-0', 'scale-95');
 
+            // Obtenim totes les categories úniques
             const allCategories = [...new Set(allTracksFromFile.map(track => track.category))];
             
             let categoryCheckboxes = '';
             allCategories.forEach(category => {
+                // Ús de la variable global totalTracksCountByCategory
+                const count = totalTracksCountByCategory[category] || 0; 
+                
+                // Si la categoria està en l'array selectedCategoriesOnLoad (que ara només conté les pujades o les seleccionades prèviament)
                 const isChecked = selectedCategoriesOnLoad.includes(category) ? 'checked' : '';
+                
+                // Afegir el recompte al costat del nom de la categoria
+                const displayCategory = `${category} (${count})`;
+
                 categoryCheckboxes += `
                     <label class="inline-flex items-center cursor-pointer m-1 text-sm sm:text-base">
                         <input type="checkbox" name="category" value="${category}" class="form-checkbox text-green-500 focus:ring-green-500 rounded" ${isChecked}>
-                        <span class="ml-2">${category}</span>
+                        <span class="ml-2">${displayCategory}</span>
                     </label>
                 `;
             });
@@ -1217,7 +1237,6 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
 
         /** Carrega i reprodueix la cançó següent (lògica interna) */
         function loadTrackAndPlayer() {
-            // La comprovació si availableTracks està buit es fa ara a handleNouHitClick per gestionar el final del joc.
             
             playerContainer.innerHTML = `<p class="text-gray-400 text-center p-4">Carregant reproductor...</p>`;
 
@@ -1252,8 +1271,6 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             iframe.onload = () => {
                 nouHitButton.classList.add('hidden');
                 mostrarInfoButton.classList.remove('hidden');
-                // Al reproductor, deixem que 'Nou Hit' estigui amagat i 'Mostrar informació' visible.
-                // La lògica de l'estat del botó es gestiona a handleNouHitClick/handleMostrarInfoClick
             };
             
             iframe.onerror = () => {
@@ -1350,6 +1367,16 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             dynamicContentContainer.classList.add('opacity-0', 'scale-95');
             categoryContainer.classList.add('opacity-0', 'scale-95');
 
+            // CÀLCULS PER AL PROGRÉS
+            const currentCategory = currentTrack.category;
+            const totalCount = totalTracksCountByCategory[currentCategory] || 0;
+            
+            // Comptem quants queden disponibles d'aquesta categoria (ja estan a availableTracks)
+            const remainingCount = availableTracks.filter(track => track.category === currentCategory).length;
+            
+            // Cançons jugades = Total - Restants. (Inclou la cançó que s'acaba de revelar)
+            const playedCount = totalCount - remainingCount;
+
 
             setTimeout(() => {
                 // Neteja immediatament i assegura que no hi ha classes d'ocultació per al nou contingut
@@ -1368,8 +1395,14 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                     </div>
                 `;
                 
+                // Afegim el progrés (Played / Total)
                 categoryContainer.innerHTML = `
-                    <p class="text-xs text-gray-400 mb-2">Categoria: <span class="font-medium text-green-400">${currentTrack.category}</span></p>
+                    <p class="text-xs text-gray-400 mb-2">
+                        Categoria: 
+                        <span class="font-medium text-green-400">
+                            ${currentCategory} (${playedCount} de ${totalCount})
+                        </span>
+                    </p>
                 `;
                 
                 // Afegim transició d'aparició
@@ -1378,7 +1411,7 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
 
                 mostrarInfoButton.classList.add('hidden');
                 nouHitButton.classList.remove('hidden');
-                // Fent el botó 'Nou Hit' visible, automàticament s'activa per ser clicat.
+                // Activem el botó per al següent hit
                 nouHitButton.disabled = false; 
 
             }, 300); // Esperem que la transició d'amagar acabi
@@ -1394,23 +1427,32 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                 const parts = lines[i].split(';');
                 if (parts.length === 5) {
                     const yearData = parts[3].trim();
-                    // Apliquem la nova lògica d'extracció de l'any a la càrrega inicial
+                    // Apliquem la lògica d'extracció de l'any
                     const yearMatch = yearData.match(/\d{4}/);
                     const year = yearMatch ? yearMatch[0] : 'N/A';
+                    const category = parts[4].trim();
 
                     tracks.push({
                         uri: parts[0].trim(),
                         title: parts[1].trim(),
                         artist: parts[2].trim(),
                         year: year,
-                        category: parts[4].trim(),
+                        category: category,
                     });
                 }
             }
             allTracksFromFile = tracks;
+            
+            // Calcular el recompte total de cançons per categoria
+            totalTracksCountByCategory = allTracksFromFile.reduce((acc, track) => {
+                acc[track.category] = (acc[track.category] || 0) + 1;
+                return acc;
+            }, {});
 
-            loadedFileNames = [];
+            // AJUSTAT: Inicialment, la selecció de categories és buida. L'usuari ha de marcar-les manualment.
             selectedCategoriesOnLoad = [];
+
+            loadedFileNames = ['Dades Internes'];
 
             if (allTracksFromFile.length > 0) {
                 renderCategorySelectionSection();
@@ -1431,5 +1473,4 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
         window.onload = initializeApp;
     </script>
 </body>
-</html>
 </html>
