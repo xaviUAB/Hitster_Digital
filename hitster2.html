@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HITSTER DIGITAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        html {
+            /* Força la barra de desplaçament vertical per evitar salts de disseny */
+            overflow-y: scroll;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Transicions per a elements dinàmics */
+        .content-transition {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+
+        /* ========================================================== */
+        /* NOU ESTIL: Mode Horitzontal (Responsive) o Simulat         */
+        /* ========================================================== */
+        
+        /* Aquest estil s'aplica al contenidor principal per crear el layout de dues columnes */
+        .landscape-mode {
+            /* Utilitza una gran part de l'amplada de la pantalla, centrat */
+            max-width: 90vw !important; 
+            width: 90vw !important;
+            margin-left: auto;
+            margin-right: auto;
+            
+            /* Grid de dues columnes */
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem; /* Espai entre columnes */
+        }
+
+        /* Per aplicar el grid directament als fills de la card sense un wrapper extra */
+        .landscape-mode #game-content-container {
+            grid-column: 1 / -1; /* Ocupa tota l'amplada de la card */
+            display: contents; /* Permet que els fills passin a ser elements del grid de la card */
+        }
+        
+        .landscape-mode #game-controls {
+            /* Columna 1: Reproductor i Botons */
+            grid-column: 1 / 2;
+        }
+        
+        .landscape-mode #info-and-setup {
+            /* Columna 2: Informació Dinàmica i Càrrega */
+            grid-column: 2 / 3;
+            /* Flex per alinear el contingut verticalment a la dreta */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .landscape-mode #info-spacer {
+            /* Elimina el separador horitzontal i ajusta marges a la columna 2 */
+            border-top: none !important; 
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen py-8">
+
+    <!-- Wrapper per a la gestió de l'amplada en mode horitzontal -->
+    <div id="app-wrapper" class="w-full">
+        <!-- El contenidor principal de la card -->
+        <div id="main-card" class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            
+            <!-- HEADER AMB BOTÓ DE SIMULACIÓ -->
+            <header class="mb-6 flex justify-between items-center">
+                <h1 class="text-2xl sm:text-3xl font-bold text-green-400">HITSTER DIGITAL</h1>
+                
+                <!-- NOU BOTÓ DE SIMULACIÓ -->
+                <button id="toggle-orientation-btn" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 w-10 h-10 text-lg rounded-full transition duration-300 shadow-md flex items-center justify-center">
+                    🔄
+                </button>
+            </header>
+
+            <!-- CONTENIDOR DEL JOC - Aquest serà el grid container en mode landscape -->
+            <div id="game-content-container" class="space-y-6">
+
+                <!-- COLUMNA 1: Reproductor i Controls -->
+                <div id="game-controls">
+                    <div id="spotify-player-container" class="relative rounded-lg overflow-hidden flex items-center justify-center bg-gray-700 h-40">
+                        <!-- Reproductor o missatge d'estat -->
+                    </div>
+
+                    <!-- CONTENIDOR DE BOTONS PRINCIPALS -->
+                    <div class="relative min-h-[44px] mt-6">
+                        <button id="nou-hit-button" 
+                            class="w-full bg-green-500 hover:bg-green-600 text-gray-900 font-bold py-2.5 px-4 rounded-lg transition duration-300 ease-in-out disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed">
+                            Nou Hit
+                        </button>
+                        <button id="mostrar-info-button" 
+                            class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2.5 px-4 rounded-lg transition duration-300 ease-in-out absolute inset-0 hidden">
+                            Mostrar informació
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COLUMNA 2: Informació Dinàmica i Configuració -->
+                <div id="info-and-setup">
+                    <!-- SECCIÓ DE CONTINGUT DINÀMIC FIX (Solució CLS) -->
+                    <!-- S'eliminen els marges superiors i el separador en mode horitzontal -->
+                    <div id="info-spacer" class="mt-6 pt-4 border-t border-gray-700">
+                        
+                        <!-- ALÇADA AUGMENTADA A min-h-[220px] PER ACOMODAR LES CATEGORIES -->
+                        <div id="dynamic-content-container" class="content-transition opacity-100 min-h-[220px] flex flex-col items-center justify-center text-center">
+                            <!-- Informació de la cançó o selecció de categories es renderitza aquí -->
+                        </div>
+                        
+                        <div id="category-container" class="content-transition opacity-100 min-h-[40px] text-center pt-2">
+                            <!-- Informació de la categoria es renderitza aquí -->
+                        </div>
+                    </div>
+                    <!-- /SECCIÓ DE CONTINGUT DINÀMIC FIX -->
+
+                    <!-- Secció per pujar fitxers -->
+                    <div id="upload-section" class="my-4 w-full space-y-2 flex flex-col">
+                        <input type="file" id="file-input" accept=".csv,.txt" multiple class="hidden"/>
+                        
+                        <!-- CONTENIDOR FLEX PER AL BOTÓ INFO I EL BOTÓ PUJAR -->
+                        <div class="flex items-center space-x-2">
+                            <!-- Botó d'Informació (i) -->
+                            <a href="instruccions.html" target="_blank" class="flex-shrink-0">
+                                <button class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md">
+                                    <!-- LLETRA 'i' MINÚSCULA -->
+                                    i
+                                </button>
+                            </a>
+                            
+                            <!-- Botó Pujar Fitxers (ocupa l'espai restant) -->
+                            <button id="upload-button" class="flex-grow bg-gray-700/50 hover:bg-gray-700 text-white py-2.5 px-4 rounded-lg transition duration-300 ease-in-out">
+                                Pujar Fitxer(s) CSV/TXT
+                            </button>
+                        </div>
+                        
+                        <div id="file-list" class="text-xs text-gray-400 mt-2 text-center min-h-[1.5rem]"></div>
+                    </div>
+                </div> <!-- Fi info-and-setup -->
+            </div> <!-- Fi game-content-container -->
+
+            <footer class="text-center text-gray-500 text-xs mt-6">
+                <p class="my-0">Una app de XRG</p>
+            </footer>
+        </div> <!-- Fi main-card -->
+    </div> <!-- Fi app-wrapper -->
+
+    <script>
+        // --- Referències a elements del DOM ---
+        const playerContainer = document.getElementById('spotify-player-container');
+        const nouHitButton = document.getElementById('nou-hit-button');
+        const mostrarInfoButton = document.getElementById('mostrar-info-button');
+        const dynamicContentContainer = document.getElementById('dynamic-content-container');
+        const categoryContainer = document.getElementById('category-container');
+        const uploadButton = document.getElementById('upload-button');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const uploadSection = document.getElementById('upload-section');
+        // NOVES REFERÈNCIES PER A RESPONSIVE
+        const mainCard = document.getElementById('main-card');
+        const toggleOrientationBtn = document.getElementById('toggle-orientation-btn');
+
+        // --- Dades de les cançons del fitxer CSV intern (delimitat per ';') ---
+        const csvData = `Spotify;Titol;Cantant;Any;Tipus
+spotify:track:4OSBTYWVwsQhGLF9NHvIbR;Rolling in the Deep;Adele;2011;Bàsic
+spotify:track:4chpfrjIqrOPshlDU4ZrKe;Chica de ayer;Nacha Pop;1980;Bàsic
+spotify:track:2DnJjbjNTV9Nd5NOa1KGba;You're So Vain;Carly Simon;1972;Bàsic
+spotify:track:7H8zey5My6uNdD2TxeCb9F;Don't Speak;No Doubt;1995;Bàsic
+spotify:track:35hfuechuOqaW31ogdauO7;It's In The Kiss (The Shoop Shoop Song);Betty Everett;2010;Bàsic
+spotify:track:46eu3SBuFCXWsPT39Yg3tJ;Don't Stop 'Til You Get Enough;Michael Jackson;1979;Summer Party
+spotify:track:4nXkbcTj3nyww1cHkw5RAP;Long Train Runnin';The Doobie Brothers;1973;Summer Party
+spotify:track:08CMK69OwVstuF3u5tNfM6;Vete - Remasterizado;Los Amaya;1977;Summer Party
+spotify:track:6mUQ6NW9WRcCuSsi4kzdlf;Un Rayo de Sol;Los Diablos;2013;Summer Party
+spotify:track:4VRP8DfxO2qQOZrnbaj324;Enamorate;Dvicio;2014;Summer Party
+spotify:track:0pQskrTITgmCMyr85tb9qq;Starman - 2012 Remaster;David Bowie;1972;Temacles
+spotify:track:5Hu3Y13dE9rEZire0tlAMW;Mi Gato;Rosario;2013;Temacles
+spotify:track:7iL6o9tox1zgHpKUfh9vuC;In Da Club;50 Cent;2003;Temacles
+spotify:track:0Ttqiz6DNvPkThvbnr9vYJ;Solo Si Es Contigo;Bombai, Bebe;2017;Temacles
+spotify:track:4qO03RMQm88DdpTJcxlglY;Call Me;Blondie;1999;Temacles
+spotify:track:2WfaOiMkCvy7F5fcp2zZ8L;Take on Me;a-ha;1985;Temacles
+`;
+
+        // --- Estat de l'aplicació ---
+        let errorTimeout;
+        let allTracksFromFile = [];
+        let loadedFileNames = [];
+        let availableTracks = [];
+        let currentTrack;
+        let categoriesLocked = false;
+        let selectedCategoriesOnLoad = [];
+        let totalTracksCountByCategory = {}; // Emmagatzema el total de cançons per categoria
+        let spotifyAccountType = null; // Nou estat: 'free' o 'premium'
+        // NOU ESTAT PER A LA SIMULACIÓ
+        let isSimulatedLandscape = false;
+
+
+        /** Mostra el reproductor de Spotify buit */
+        function showInitialPlayerMessage() {
+            // Missatge inicial amb color i negreta, i emoticones colorides (🎤, ✨)
+            let message = '';
+            if (!spotifyAccountType) {
+                // MISSATGE ACTUALITZAT: S'ha eliminat 'teu'
+                message = `✨ Tria el tipus de compte Spotify 🎤`;
+            } else {
+                message = `✨ Selecciona una o més categories 🎤<br>
+                            i fes "Nou Hit" per començar`;
+            }
+
+            playerContainer.innerHTML = `<p class="text-white font-bold text-center p-4 text-lg">
+                ${message}
+            </p>`;
+        }
+
+        /** Oculta el contingut dinàmic suaument (s'usa per a transicions) */
+        function hideDynamicContent() {
+            // Aplica les classes de fade-out. Els min-height a l'HTML asseguren que l'espai no es col·lapsa.
+            dynamicContentContainer.classList.add('opacity-0', 'scale-95');
+            categoryContainer.classList.add('opacity-0', 'scale-95');
+        }
+        
+        /** Mostra un missatge al botó d'error, canvia els estils i els reverteix. */
+        function showButtonError(message) {
+            nouHitButton.textContent = message;
+            nouHitButton.classList.remove('bg-green-500', 'hover:bg-green-600', 'text-gray-900');
+            nouHitButton.classList.add('bg-red-600', 'hover:bg-red-700', 'text-white');
+            clearTimeout(errorTimeout);
+            errorTimeout = setTimeout(() => {
+                nouHitButton.textContent = 'Nou Hit';
+                nouHitButton.classList.remove('bg-red-600', 'hover:bg-red-700', 'text-white');
+                nouHitButton.classList.add('bg-green-500', 'hover:bg-green-600', 'text-gray-900');
+                
+                // Activem/Desactivem el botó basat en les categories seleccionades, excepte si estem en mode joc
+                if (!categoriesLocked) {
+                    // Si ja s'ha triat el compte
+                    if (spotifyAccountType) {
+                        updateButtonState(); // Usem la funció global
+                    } else {
+                        // Si encara no s'ha triat el compte, el botó segueix deshabilitat.
+                        nouHitButton.disabled = true;
+                    }
+                }
+            }, 3000);
+        }
+
+        /** Actualitza l'estat del botó "Nou Hit" basant-se en les categories seleccionades i el tipus de compte. */
+        function updateButtonState() {
+            const checkboxes = document.querySelectorAll('input[name="category"]');
+            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+            // El botó només s'activa si el compte està triat I alguna categoria marcada
+            nouHitButton.disabled = !(spotifyAccountType && anyChecked);
+        }
+
+        /** Marca tots els checkboxes de categoria com a seleccionats */
+        function selectAllCategories() {
+            const labels = document.querySelectorAll('.category-label');
+            labels.forEach(label => {
+                const checkbox = label.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = true;
+                    updateCategoryStyle(label);
+                }
+            });
+            updateButtonState();
+        }
+
+        /** Desmarca tots els checkboxes de categoria */
+        function deselectAllCategories() {
+            const labels = document.querySelectorAll('.category-label');
+            labels.forEach(label => {
+                const checkbox = label.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = false;
+                    updateCategoryStyle(label);
+                }
+            });
+            updateButtonState();
+        }
+
+        /** Processa el contingut d'un fitxer pujat. */
+        function processFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const fileContent = event.target.result;
+                    const lines = fileContent.trim().split('\n');
+                    const tracks = [];
+                    // Extreu el nom del fitxer sense extensió com a categoria
+                    const category = file.name.split('.').slice(0, -1).join('.') || file.name;
+
+                    if (lines.length <= 1) { 
+                        resolve(tracks);
+                        return;
+                    }
+
+                    // Forcem el delimitador a punt i coma (;) per consistència amb les instruccions
+                    const delimiter = ';'; 
+
+                    // Ignorem la primera línia (capçalera) si no hi ha cançons en una línia
+                    const startLine = (lines[0].split(delimiter).length >= 4 && lines[0].toLowerCase().includes('spotify')) ? 1 : 0;
+
+                    for (let i = startLine; i < lines.length; i++) { 
+                        const line = lines[i].trim();
+                        if (!line) continue; 
+
+                        // IMPORTANT: Utilitzem el delimitador estricte de punt i coma (;)
+                        const parts = line.split(delimiter);
+                        
+                        const cleanedParts = parts.map(part => {
+                            // Netegem possibles cometes d'encapsulament (opcional)
+                            return part.trim().replace(/^"|"$/g, '');
+                        });
+
+                        // Esperem 4 columnes: URI, Títol, Artista, Data
+                        if (cleanedParts.length >= 4) {
+                            const uri = cleanedParts[0]; 	
+                            const title = cleanedParts[1]; 	
+                            const artist = cleanedParts[2]; 	
+                            const yearData = cleanedParts[3]; // Conté la data completa
+                            
+                            // Lògica per extreure els 4 dígits consecutius (l'any)
+                            const yearMatch = yearData.match(/\d{4}/);
+                            const year = yearMatch ? yearMatch[0] : 'N/A';
+
+                            if (uri && title) {
+                                tracks.push({
+                                    uri: uri,
+                                    title: title,
+                                    artist: artist,
+                                    year: year,
+                                    category: category,
+                                });
+                            }
+                        }
+                    }
+                    resolve(tracks);
+                };
+                reader.onerror = (error) => reject(error);
+                reader.readAsText(file);
+            });
+        }
+
+        /** Gestiona la selecció de fitxers. */
+        async function handleFileUpload(event) {
+            const files = event.target.files;
+            if (!files.length) return;
+
+            uploadButton.disabled = true;
+            uploadButton.textContent = 'Processant...';
+            
+            // 1. Guardem les categories que ja estaven seleccionades
+            selectedCategoriesOnLoad = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(input => input.value);
+
+            for (const file of files) {
+                const categoryName = file.name.split('.').slice(0, -1).join('.') || file.name;
+
+                if (loadedFileNames.includes(file.name)) continue;
+                try {
+                    const newTracks = await processFile(file);
+                    allTracksFromFile.push(...newTracks);
+                    loadedFileNames.push(file.name);
+                    
+                    // Actualitzar el recompte total amb les noves cançons
+                    totalTracksCountByCategory[categoryName] = (totalTracksCountByCategory[categoryName] || 0) + newTracks.length;
+                    
+                    // Marquem la nova categoria com a seleccionada per defecte si no ho estava 
+                    if (!selectedCategoriesOnLoad.includes(categoryName)) {
+                        selectedCategoriesOnLoad.push(categoryName);
+                    }
+                } catch (error) {
+                    console.error("Error llegint el fitxer:", error);
+                }
+            }
+            
+            fileList.innerHTML = ''; 
+
+            if (allTracksFromFile.length > 0) {
+                // 3. Renderitza les categories amb les categories noves marcades
+                renderSetupSection(); // Crida la funció de configuració
+            }
+
+            uploadButton.disabled = false;
+            uploadButton.textContent = 'Pujar Fitxer(s) CSV/TXT';
+            fileInput.value = ''; 
+        }
+        
+        /** Actualitza l'estil d'una etiqueta (label) segons si el seu checkbox 
+         * està marcat o no.
+         */
+        function updateCategoryStyle(labelElement) {
+            const checkbox = labelElement.querySelector('input[type="checkbox"]');
+            const span = labelElement.querySelector('span');
+            
+            if (checkbox.checked) {
+                // Estil Seleccionat: Fons verd, Text negre, Text en negreta
+                labelElement.classList.remove('bg-gray-700/50', 'text-white', 'hover:bg-gray-700');
+                labelElement.classList.add('bg-green-500', 'text-gray-900', 'hover:bg-green-600', 'shadow-md');
+                span.classList.add('font-bold'); // AFegir NEGRETA
+                
+                // Assegurem que el checkbox també sigui visible si hi ha estil de fons fosc
+                checkbox.classList.remove('text-green-500');
+                checkbox.classList.add('text-gray-900');
+            } else {
+                // Estil per Defecte: Fons gris fosc, Text blanc, Text normal
+                labelElement.classList.remove('bg-green-500', 'text-gray-900', 'hover:bg-green-600', 'shadow-md');
+                labelElement.classList.add('bg-gray-700/50', 'text-white', 'hover:bg-gray-700');
+                span.classList.remove('font-bold'); // Treure NEGRETA
+                
+                checkbox.classList.remove('text-gray-900');
+                checkbox.classList.add('text-green-500');
+            }
+        }
+
+
+        /** Renderitza la secció de selecció de compte i categories */
+        function renderSetupSection() {
+            // Assegurem que l'estat és de selecció
+            categoriesLocked = false;
+            // Mostrem la secció d'upload per si s'ha ocultat
+            const uploadButtonParent = uploadButton.parentElement.parentElement;
+            uploadButtonParent.querySelector('a').classList.remove('hidden'); // Botó 'i'
+            uploadButton.classList.remove('hidden'); 
+            
+            nouHitButton.classList.remove('hidden');
+            mostrarInfoButton.classList.add('hidden');
+            
+            showInitialPlayerMessage();
+            
+            // Neteja i assegura la visibilitat immediatament
+            dynamicContentContainer.innerHTML = '';
+            categoryContainer.innerHTML = '';
+            dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
+            categoryContainer.classList.remove('opacity-0', 'scale-95');
+
+            if (!spotifyAccountType) {
+                // =================================
+                // PAS 1: SELECCIÓ DE COMPTE SPOTIFY
+                // =================================
+                dynamicContentContainer.innerHTML = `
+                    <div class="py-4 w-full px-4">
+                        <p class="text-lg font-semibold mb-6">Tria el tipus de compte Spotify</p>
+                        <div class="space-y-4">
+                            <button data-account="premium" class="account-choice w-full bg-green-500 hover:bg-green-600 text-gray-900 font-bold py-3 rounded-lg transition duration-150 shadow-md">
+                                Premium
+                            </button>
+                            <button data-account="free" class="account-choice w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg transition duration-150 shadow-md">
+                                Gratuït
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Desactivem el botó de Nou Hit fins que no s'esculli el compte
+                nouHitButton.disabled = true;
+
+                document.querySelectorAll('.account-choice').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        spotifyAccountType = e.target.getAttribute('data-account');
+                        // Reiniciem l'estat de selecció de categories
+                        selectedCategoriesOnLoad = []; 
+                        // Tornem a renderitzar per mostrar les categories
+                        renderSetupSection(); 
+                    });
+                });
+                return; // Sortim, ja que l'usuari ha de triar el compte primer
+            }
+
+            // =================================
+            // PAS 2: SELECCIÓ DE CATEGORIES (Si ja s'ha escollit el compte)
+            // =================================
+
+            // Obtenim totes les categories úniques
+            const allCategories = [...new Set(allTracksFromFile.map(track => track.category))];
+            
+            let categoryCheckboxes = '';
+            allCategories.forEach(category => {
+                // Ús de la variable global totalTracksCountByCategory
+                const count = totalTracksCountByCategory[category] || 0; 
+                
+                // Si la categoria està en l'array selectedCategoriesOnLoad, es marca
+                const isChecked = selectedCategoriesOnLoad.includes(category);
+                
+                // Definim les classes inicials. Es tria l'estil per defecte, que s'actualitzarà després
+                const baseClasses = 'flex items-center cursor-pointer p-2 text-sm sm:text-base rounded-lg transition duration-150';
+                
+                // Afegir el recompte al costat del nom de la categoria
+                const displayCategory = `${category} (${count})`;
+
+                categoryCheckboxes += `
+                    <label class="category-label ${baseClasses}" data-category="${category}">
+                        <input type="checkbox" name="category" value="${category}" class="form-checkbox focus:ring-green-500 rounded" ${isChecked ? 'checked' : ''}>
+                        <span class="ml-2">${displayCategory}</span>
+                    </label>
+                `;
+            });
+
+            // Ús de grid grid-cols-2 i gap-3 per crear la disposició de dues columnes
+            dynamicContentContainer.innerHTML = `
+                <div class="py-4 w-full">
+                    <p class="text-sm text-gray-400 text-center mb-4">Tria una o més categories</p>
+
+                    <!-- NOU: BOTONS SELECCIONAR/DESSELECCIONAR TOTS -->
+                    <div class="flex justify-center space-x-3 mb-4 px-2 sm:px-4">
+                        <button id="select-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">
+                            Seleccionar totes
+                        </button>
+                        <button id="deselect-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">
+                            Deseleccionar totes
+                        </button>
+                    </div>
+                    <!-- FI NOU -->
+
+                    <div id="category-grid" class="grid grid-cols-2 gap-3 px-2 sm:px-4">
+                        ${categoryCheckboxes}
+                    </div>
+                </div>
+            `;
+            
+            // Assegura l'aparició
+            dynamicContentContainer.classList.add('opacity-100', 'scale-100');
+
+
+            const checkboxes = document.querySelectorAll('input[name="category"]');
+            const labels = document.querySelectorAll('.category-label');
+            
+            // Afegim els listeners als botons de Selecció/Deselecció
+            const selectAllBtn = document.getElementById('select-all-btn');
+            const deselectAllBtn = document.getElementById('deselect-all-btn');
+
+            if (selectAllBtn) selectAllBtn.addEventListener('click', selectAllCategories);
+            if (deselectAllBtn) deselectAllBtn.addEventListener('click', deselectAllCategories);
+
+
+            // Aplica els estils inicials i afegeix l'esdeveniment de canvi
+            labels.forEach(label => {
+                // Apliquem l'estil basat en l'estat inicial (selectedCategoriesOnLoad)
+                updateCategoryStyle(label);
+                
+                // Afegim l'esdeveniment per canviar l'estil i l'estat del botó en temps real
+                label.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+                    updateCategoryStyle(label);
+                    updateButtonState();
+                });
+            });
+
+            updateButtonState(); // Estat inicial del botó
+        }
+        
+        /** Reinicia l'estat del joc per tornar a la selecció de categories */
+        function resetGame() {
+            // Re-inicialitzem l'estat clau del joc
+            categoriesLocked = false;
+            availableTracks = [];
+            currentTrack = null;
+            // IMPORTANT: Reiniciem el compte per forçar la tria al pas 1
+            spotifyAccountType = null;
+            
+            // Esborrem les categories seleccionades per assegurar que cap checkbox estigui marcat.
+            selectedCategoriesOnLoad = [];
+            
+            // 1. Amaguem el contingut actual amb transició (fade-out)
+            hideDynamicContent(); 
+            
+            // 2. Esperem el temps de transició (300ms) abans de renderitzar la nova vista
+            setTimeout(renderSetupSection, 300);
+        }
+
+        /** Carrega i reprodueix la cançó següent (lògica interna) */
+        function loadTrackAndPlayer() {
+            
+            playerContainer.innerHTML = `<p class="text-gray-400 text-center p-4">Carregant reproductor...</p>`;
+
+            const randomIndex = Math.floor(Math.random() * availableTracks.length);
+            currentTrack = availableTracks[randomIndex];
+            
+            const trackId = currentTrack.uri.split(':').pop();
+
+            // LÒGICA NOU: Determina el punt d'inici (0s per Free, 60s per Premium)
+            const startSeconds = spotifyAccountType === 'free' ? 0 : 60; 
+            
+            // Utilitza 't=' amb la variable startSeconds.
+            const urlToLoad = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&autoplay=1&t=${startSeconds}`;
+            
+            const iframe = document.createElement('iframe');
+            iframe.style.borderRadius = '12px';
+            iframe.src = urlToLoad;
+            iframe.width = '100%';
+            iframe.height = '152';
+            iframe.frameBorder = '0';
+            iframe.allowFullscreen = true;
+            iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+            iframe.loading = 'lazy';
+            
+            const mask = document.createElement('div');
+            mask.id = 'player-mask';
+            mask.className = 'absolute inset-0 bg-gray-800 rounded-lg transition-opacity duration-500';
+            // Aquest CSS s'utilitza per amagar una part del reproductor de Spotify si cal
+            mask.style.webkitMaskImage = 'radial-gradient(circle at 92% 82%, transparent 19px, black 19px)';
+            mask.style.maskImage = 'radial-gradient(circle at 92% 82%, transparent 19px, black 19px)';
+            mask.style.pointerEvents = 'none';
+
+            playerContainer.innerHTML = '';
+            playerContainer.appendChild(iframe);
+            playerContainer.appendChild(mask);
+            
+            iframe.onload = () => {
+                nouHitButton.classList.add('hidden');
+                mostrarInfoButton.classList.remove('hidden');
+            };
+            
+            iframe.onerror = () => {
+                showButtonError("Error de càrrega.");
+                playerContainer.innerHTML = `<p class="text-gray-400 text-center p-4">Error de càrrega.</p>`;
+                nouHitButton.classList.remove('hidden');
+                mostrarInfoButton.classList.add('hidden');
+                nouHitButton.disabled = false; 
+                if (mask) mask.remove();
+            };
+
+            availableTracks.splice(randomIndex, 1);
+        }
+
+        /** Gestiona el clic a "Nou Hit" per a reproduir una cançó aleatòria. */
+        function handleNouHitClick() {
+            if (nouHitButton.disabled) return;
+
+            if (!categoriesLocked) {
+                // PRIMERA TIRADA: Bloqueja les categories i inicia el joc
+                selectedCategoriesOnLoad = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(input => input.value);
+                
+                if (selectedCategoriesOnLoad.length === 0) {
+                    showButtonError('Selecciona una categoria');
+                    return;
+                }
+                
+                if (!spotifyAccountType) {
+                    // MISSATGE ACTUALITZAT: S'ha eliminat 'teu'
+                    showButtonError('Tria el tipus de compte Spotify');
+                    return;
+                }
+
+                availableTracks = allTracksFromFile.filter(track => selectedCategoriesOnLoad.includes(track.category));
+                
+                if (availableTracks.length === 0) {
+                    showButtonError('No hi ha cançons en aquestes categories.');
+                    return;
+                }
+                
+                categoriesLocked = true;
+                // Amaguem el botó de pujar fitxer un cop iniciat el joc
+                const uploadButtonParent = uploadButton.parentElement.parentElement;
+                uploadButtonParent.querySelector('a').classList.add('hidden'); // Oculta el botó 'i'
+                uploadButton.classList.add('hidden'); 
+                
+                // 1. Iniciem la transició d'ocultació del contingut de categories
+                hideDynamicContent(); 
+                nouHitButton.disabled = true; // Desactivem durant la transició i càrrega
+                
+                // Esperem que la transició visual acabi (300ms)
+                setTimeout(() => {
+                    // 2. Neteja total del contingut un cop s'ha ocultat per mantenir el contenidor buit
+                    dynamicContentContainer.innerHTML = '';
+                    categoryContainer.innerHTML = '';
+                    
+                    // 3. Carreguem la nova pista i el reproductor
+                    loadTrackAndPlayer();
+                    
+                    // Assegurem que les classes de visibilitat es reverteixen (opacity: 100) per quan es mostri la info
+                    dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
+                    categoryContainer.classList.remove('opacity-0', 'scale-95');
+                }, 300);
+
+
+            } else {
+                // TIRADES SUBSEQUENTS: Amaga la info anterior, i carrega el nou hit
+                
+                // COMPROVACIÓ DE FI DE JOC
+                if (availableTracks.length === 0) {
+                    // Fi de joc: Deshabilita el botó i mostra l'avís
+                    nouHitButton.disabled = true;
+                    mostrarInfoButton.classList.add('hidden');
+                    // Missatge final amb emoticones (disc, guitarra)
+                    playerContainer.innerHTML = `<p class="text-white font-bold text-center p-4 text-xl">
+                        💿 Ja no queden cançons per mostrar 🎸<br>
+                        <span class="text-sm text-gray-400">(Reiniciant en 5 segons)</span>
+                    </p>`;
+                    hideDynamicContent(); 
+                    // Reinicia l'estat després de 5 segons (5000ms)
+                    setTimeout(resetGame, 5000); 
+                    return;
+                }
+                
+                nouHitButton.disabled = true;
+                hideDynamicContent(); // Inicia la transició visual de la informació anterior (fade-out)
+                
+                // Espera 300ms (la durada de la transició) i carrega la nova pista
+                setTimeout(loadTrackAndPlayer, 300);
+            }
+        }
+        
+        /** Mostra la informació de la cançó actual. */
+        function handleMostrarInfoClick() {
+            if (!currentTrack) {
+                showButtonError("No hi ha cançó seleccionada.");
+                return;
+            }
+            
+            const mask = document.getElementById('player-mask');
+            if (mask) mask.remove();
+            
+            // Amaga el contingut abans d'injectar per fer la transició (inicia fade-out)
+            dynamicContentContainer.classList.add('opacity-0', 'scale-95');
+            categoryContainer.classList.add('opacity-0', 'scale-95');
+
+            // CÀLCULS PER AL PROGRÉS
+            const currentCategory = currentTrack.category;
+            const totalCount = totalTracksCountByCategory[currentCategory] || 0;
+            
+            // Comptem quants queden disponibles d'aquesta categoria (ja estan a availableTracks)
+            const remainingCount = availableTracks.filter(track => track.category === currentCategory).length;
+            
+            // Cançons jugades = Total - Restants. (Inclou la cançó que s'acaba de revelar)
+            const playedCount = totalCount - remainingCount;
+
+
+            setTimeout(() => {
+                // Neteja immediatament i assegura que no hi ha classes d'ocultació per al nou contingut
+                dynamicContentContainer.innerHTML = '';
+                categoryContainer.innerHTML = '';
+                dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
+                categoryContainer.classList.remove('opacity-0', 'scale-95');
+                
+                // S'injecta el contingut (Any, Títol, Artista)
+                dynamicContentContainer.innerHTML = `
+                    <div class="py-4">
+                        <p class="text-lg font-semibold">${currentTrack.title}</p>
+                        <p class="font-bold text-sm text-gray-400 mt-1">${currentTrack.artist}</p>
+                        <div class="h-8"></div>
+                        <p class="text-6xl font-extrabold text-green-400 mb-4">${currentTrack.year}</p>
+                    </div>
+                `;
+                
+                // Afegim el progrés (Played / Total)
+                categoryContainer.innerHTML = `
+                    <p class="text-xs text-gray-400 mb-2">
+                        Categoria: 
+                        <span class="font-medium text-green-400">
+                            ${currentCategory} (${playedCount} de ${totalCount})
+                        </span>
+                    </p>
+                `;
+                
+                // Amaguem el botó Mostrar Info i mostrem el Nou Hit.
+                mostrarInfoButton.classList.add('hidden');
+                nouHitButton.classList.remove('hidden');
+                
+                // IMPORTANT: NO desactivem aquí el botó.
+                // Es deixa actiu per permetre el clic que desencadena la comprovació de fi de joc.
+                nouHitButton.disabled = false;
+
+            }, 300);
+        }
+        
+        /** Simula el canvi d'orientació */
+        function toggleOrientationSimulation() {
+            isSimulatedLandscape = !isSimulatedLandscape;
+            
+            if (isSimulatedLandscape) {
+                // Aplica les classes per al layout de dues columnes
+                mainCard.classList.add('landscape-mode');
+                toggleOrientationBtn.textContent = '📐'; // Icona per tornar a vertical
+                toggleOrientationBtn.title = 'Tornar a Vertical';
+            } else {
+                // Elimina les classes per tornar al layout d'una columna (per defecte)
+                mainCard.classList.remove('landscape-mode');
+                toggleOrientationBtn.textContent = '🔄'; // Icona per anar a horitzontal
+                toggleOrientationBtn.title = 'Passar a Horitzontal';
+            }
+        }
+
+        /** Inicialitza les dades i els listeners */
+        function initialize() {
+            // 1. Processar el fitxer CSV intern com si fos un fitxer pujat
+            const internalTracks = processInternalCsv(csvData);
+            allTracksFromFile.push(...internalTracks);
+            
+            // 2. Calcular els totals per categoria inicials
+            allTracksFromFile.forEach(track => {
+                totalTracksCountByCategory[track.category] = (totalTracksCountByCategory[track.category] || 0) + 1;
+            });
+            
+            // 3. Inicialitzar la vista (Selecció de compte)
+            renderSetupSection();
+
+            // 4. Afegir listeners
+            nouHitButton.addEventListener('click', handleNouHitClick);
+            mostrarInfoButton.addEventListener('click', handleMostrarInfoClick);
+            uploadButton.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileUpload);
+            
+            // 5. Listener per al botó de simulació
+            toggleOrientationBtn.addEventListener('click', toggleOrientationSimulation);
+            toggleOrientationBtn.title = 'Passar a Horitzontal'; // Set initial title
+
+            // 6. Comprovar l'orientació real inicial
+            if (window.innerWidth > 768 && window.innerWidth > window.innerHeight) {
+                // Si l'amplada és superior a 768px i està en horitzontal, l'activem per defecte
+                toggleOrientationSimulation();
+            }
+        }
+
+        /** Processa les dades CSV dures per a la inicialització. */
+        function processInternalCsv(data) {
+            const lines = data.trim().split('\n');
+            const tracks = [];
+            
+            if (lines.length <= 1) return [];
+            
+            const delimiter = ';';
+            const startLine = 1; // Sempre saltem la capçalera interna
+
+            for (let i = startLine; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const parts = line.split(delimiter);
+                
+                if (parts.length >= 5) { // Esperem 5 columnes per a les dades internes
+                    const [uri, title, artist, year, category] = parts.map(p => p.trim().replace(/^"|"$/g, ''));
+                    tracks.push({ uri, title, artist, year, category });
+                }
+            }
+            return tracks;
+        }
+
+        // --- INICI DE L'APLICACIÓ ---
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
