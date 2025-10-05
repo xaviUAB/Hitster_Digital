@@ -71,6 +71,11 @@
             margin-top: 0 !important;
             padding-top: 0 !important;
         }
+        
+        /* Ajust per a la màscara: Assegura que l'alçada sigui 100% de la del reproductor */
+        #player-mask {
+            height: 100%; 
+        }
     </style>
 </head>
 <body class="text-white"> 
@@ -154,8 +159,6 @@
                     
                     <!-- CONTENIDOR FLEX PER AL BOTÓ PUJAR -->
                     <div class="flex items-center space-x-2">
-                        <!-- El botó d'instruccions estava aquí, però s'ha mogut a la capçalera -->
-                        
                         <!-- Botó Pujar Fitxers (ocupa l'espai restant) -->
                         <button id="upload-button" class="flex-grow bg-gray-700/50 hover:bg-gray-700 text-white py-2.5 px-4 rounded-lg transition duration-300 ease-in-out">
                             Pujar Fitxer(s) CSV/TXT
@@ -189,8 +192,6 @@
         const toggleOrientationBtn = document.getElementById('toggle-orientation-btn');
 
         // --- Dades de les cançons del fitxer CSV intern (delimitat per ';') ---
-        // Aquesta variable es manté buida però es conserva per si es volgués afegir
-        // un contingut per defecte en el futur.
         const csvData = ``;
         
         // --- Constants per a la càrrega remota (ACTUALITZADES PER APUNTAR A LA CARPETA 'dades') ---
@@ -678,9 +679,14 @@
             const mask = document.createElement('div');
             mask.id = 'player-mask';
             // Màscara per amagar l'any al reproductor
+            // La classe 'inset-0' ja li dóna width: 100% i height: 100%
             mask.className = 'absolute inset-0 bg-gray-800 rounded-lg transition-opacity duration-500';
-            mask.style.webkitMaskImage = 'radial-gradient(circle at 92% 82%, transparent 19px, black 19px)';
-            mask.style.maskImage = 'radial-gradient(circle at 92% 82%, transparent 19px, black 19px)';
+            
+            // AJUST SOL·LICITAT: Moure el centre del cercle a 93% 80% (1px a l'esquerra de 94% 80%)
+            // S'ha canviat de '94% 80%' a '93% 80%'
+            const maskPosition = '93% 80%';
+            mask.style.webkitMaskImage = `radial-gradient(circle at ${maskPosition}, transparent 19px, black 19px)`;
+            mask.style.maskImage = `radial-gradient(circle at ${maskPosition}, transparent 19px, black 19px)`;
             mask.style.pointerEvents = 'none';
 
             playerContainer.innerHTML = '';
@@ -844,32 +850,29 @@
 
         /** Inicialitza les dades i els listeners */
         async function initialize() {
-            // 1. La variable csvData ja està buida i no es processa cap dada interna.
-            //    La lògica de processament d'InternalCSV ha estat eliminada.
-            
-            // 2. Carregar fitxers remots dinàmicament
+            // 1. Carregar fitxers remots dinàmicament
             await fetchRemoteCsvs(); 
             
-            // 3. Recalcular els totals per categoria
+            // 2. Recalcular els totals per categoria
             totalTracksCountByCategory = allTracksFromFile.reduce((acc, track) => {
                 acc[track.category] = (acc[track.category] || 0) + 1;
                 return acc;
             }, {});
             
-            // 4. Inicialitzar la vista (Selecció de compte)
+            // 3. Inicialitzar la vista (Selecció de compte)
             renderSetupSection();
 
-            // 5. Afegir listeners
+            // 4. Afegir listeners
             nouHitButton.addEventListener('click', handleNouHitClick);
             mostrarInfoButton.addEventListener('click', handleMostrarInfoClick);
             uploadButton.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', handleFileUpload);
             
-            // 6. Listener per al botó de simulació
+            // 5. Listener per al botó de simulació
             toggleOrientationBtn.addEventListener('click', toggleOrientationSimulation);
             toggleOrientationBtn.title = 'Passar a Horitzontal'; 
 
-            // 7. Comprovar l'orientació real inicial
+            // 6. Comprovar l'orientació real inicial
             if (window.innerWidth >= 1024) { 
                 toggleOrientationSimulation();
             }
