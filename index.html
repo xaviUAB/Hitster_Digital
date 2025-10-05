@@ -10,80 +10,168 @@
         html {
             /* Força la barra de desplaçament vertical per evitar salts de disseny */
             overflow-y: scroll;
+            /* CORRECCIÓ CLAU: Força l'ocultació de qualsevol desbordament horitzontal */
+            overflow-x: hidden !important; 
         }
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+            /* Centratge vertical i horitzontal de la CARD amb Flexbox */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Permet que el contingut llarg es desplaci */
+            min-height: 100vh;
+            padding: 2rem 1rem; /* Padding a banda i banda per a marges en mòbil */
         }
-        /* Transicions per a elements dinàmics */
-        .content-transition {
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        
+        /* APLICACIÓ DE CENTRATGE I AMPLADA MAXIMAL AL CONTENIDOR PRINCIPAL */
+        #main-card {
+            width: 100%; /* Ocupa tota l'amplada disponible del contenidor flex (body) */
+            max-width: 1024px; /* max-w-4xl - Límit elegant per a la visualització vertical en escriptori */
+            margin: 0 auto; /* Centratge addicional per seguretat */
+        }
+
+        /* ========================================================== */
+        /* NOU ESTIL: Mode Horitzontal (Responsive) o Simulat         */
+        /* ========================================================== */
+        
+        .landscape-mode {
+            /* En mode landscape, permetem que s'expandeixi més per aprofitar l'espai */
+            max-width: 1280px !important; /* max-w-7xl, utilitza més espai que abans */
+            
+            /* Grid de dues columnes */
+            display: grid;
+            /* Definim columnes: 1a columna per al reproductor (ample fix/màx 400px), 2a per a la informació (flex) */
+            grid-template-columns: minmax(350px, 400px) 1fr; 
+            gap: 3rem; /* Espai més gran entre columnes */
+        }
+        
+        /* Ajustos per al layout de columnes */
+        .landscape-mode #game-content-container {
+            grid-column: 1 / -1; 
+            display: contents; 
+        }
+        
+        .landscape-mode #game-controls {
+            grid-column: 1 / 2;
+            /* Eliminem el centratge automàtic en mode landscape */
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        
+        .landscape-mode #info-and-setup {
+            grid-column: 2 / 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .landscape-mode #info-spacer {
+            border-top: none !important; 
+            margin-top: 0 !important;
+            padding-top: 0 !important;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen py-8">
+<body class="text-white"> 
 
-    <div class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
-        <header class="text-center mb-6">
-            <h1 class="text-2xl sm:text-3xl font-bold text-green-400">HITSTER DIGITAL</h1>
-        </header>
-
-        <div id="spotify-player-container" class="relative rounded-lg overflow-hidden mb-6 flex items-center justify-center bg-gray-700 h-40">
-            <!-- Reproductor o missatge d'estat -->
-        </div>
-
-        <!-- CONTENIDOR DE BOTONS PRINCIPALS -->
-        <div class="relative min-h-[44px] mb-4">
-            <button id="nou-hit-button" 
-                class="w-full bg-green-500 hover:bg-green-600 text-gray-900 font-bold py-2.5 px-4 rounded-lg transition duration-300 ease-in-out disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed">
-                Nou Hit
-            </button>
-            <button id="mostrar-info-button" 
-                class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2.5 px-4 rounded-lg transition duration-300 ease-in-out absolute inset-0 hidden">
-                Mostrar informació
-            </button>
-        </div>
-
-        <!-- SECCIÓ DE CONTINGUT DINÀMIC FIX (Solució CLS) -->
-        <div id="info-spacer" class="mt-6 pt-4 border-t border-gray-700">
+    <!-- El contenidor principal de la card (s'elimina #app-wrapper) -->
+    <div id="main-card" class="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl">
+        
+        <!-- HEADER AMB BOTÓ DE SIMULACIÓ I BOTÓ D'INSTRUCCIONS -->
+        <header class="mb-6 flex justify-between items-center">
             
-            <!-- ALÇADA AUGMENTADA A min-h-[220px] PER ACOMODAR LES CATEGORIES -->
-            <div id="dynamic-content-container" class="content-transition opacity-100 min-h-[220px] flex flex-col items-center justify-center text-center">
-                <!-- Informació de la cançó o selecció de categories es renderitza aquí -->
-            </div>
-            
-            <div id="category-container" class="content-transition opacity-100 min-h-[40px] text-center pt-2">
-                <!-- Informació de la categoria es renderitza aquí -->
-            </div>
-        </div>
-        <!-- /SECCIÓ DE CONTINGUT DINÀMIC FIX -->
-
-        <!-- Secció per pujar fitxers -->
-        <div id="upload-section" class="my-4 w-full space-y-2 flex flex-col">
-            <input type="file" id="file-input" accept=".csv,.txt" multiple class="hidden"/>
-            
-            <!-- CONTENIDOR FLEX PER AL BOTÓ INFO I EL BOTÓ PUJAR -->
-            <div class="flex items-center space-x-2">
-                <!-- Botó d'Informació (i) -->
-                <a href="instruccions.html" target="_blank" class="flex-shrink-0">
-                    <button class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md">
-                        <!-- LLETRA 'i' MINÚSCULA -->
+            <!-- CONTENIDOR DE BOTONS ESQUERRA (Buit per al centratge) -->
+            <div class="flex-grow flex justify-start items-center space-x-2">
+                <!-- Botó d'Informació (i) - NOU -->
+                <a href="https://xaviuab.github.io/Hitster_Digital/instruccions.html" target="_blank">
+                    <button class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md" title="Instruccions del Joc (s'obre en una pestanya nova)">
                         i
                     </button>
                 </a>
-                
-                <!-- Botó Pujar Fitxers (ocupa l'espai restant) -->
-                <button id="upload-button" class="flex-grow bg-gray-700/50 hover:bg-gray-700 text-white py-2.5 px-4 rounded-lg transition duration-300 ease-in-out">
-                    Pujar Fitxer(s) CSV/TXT
-                </button>
             </div>
             
-            <div id="file-list" class="text-xs text-gray-400 mt-2 text-center min-h-[1.5rem]"></div>
-        </div>
+            <!-- TÍTOL CENTRAL (Flex-grow 0 per no expandir-se) -->
+            <h1 class="text-2xl sm:text-3xl font-bold text-green-400 flex-shrink-0">HITSTER DIGITAL</h1>
+            
+            <!-- CONTENIDOR DE BOTONS DRETA (Per centrar el títol) -->
+            <div class="flex-grow flex justify-end items-center">
+                <!-- BOTÓ DE SIMULACIÓ -->
+                <button id="toggle-orientation-btn" 
+                    class="bg-gray-600 hover:bg-gray-700 text-white font-bold p-2 w-10 h-10 text-lg rounded-full transition duration-300 shadow-md flex items-center justify-center">
+                    🔄
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENIDOR DEL JOC - Aquest serà el grid container en mode landscape -->
+        <div id="game-content-container" class="space-y-6">
+
+            <!-- COLUMNA 1: Reproductor i Controls 
+                 APLICACIÓ DE MIDA FIXA PER AL MODE VERTICAL:
+                 max-w-[400px] limita l'amplada del reproductor.
+                 mx-auto centra-ho en el mode vertical.
+            -->
+            <div id="game-controls" class="max-w-[400px] mx-auto">
+                
+                <!-- CONTENIDOR FIX: Fixat a h-[160px] i w-full (de max-w-[400px]) -->
+                <div id="spotify-player-container" 
+                    class="relative rounded-lg overflow-hidden flex items-center justify-center bg-gray-700 w-full h-[160px]">
+                    <!-- Reproductor o missatge d'estat -->
+                </div>
+
+                <!-- CONTENIDOR DE BOTONS PRINCIPALS -->
+                <div class="relative min-h-[44px] mt-6">
+                    <button id="nou-hit-button" 
+                        class="w-full bg-green-500 hover:bg-green-600 text-gray-900 font-bold py-2.5 px-4 rounded-lg transition duration-300 ease-in-out disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed">
+                        Nou Hit
+                    </button>
+                    <button id="mostrar-info-button" 
+                        class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2.5 px-4 rounded-lg transition duration-300 ease-in-out absolute inset-0 hidden">
+                        Mostrar informació
+                    </button>
+                </div>
+            </div>
+
+            <!-- COLUMNA 2: Informació Dinàmica i Configuració -->
+            <div id="info-and-setup">
+                <!-- SECCIÓ DE CONTINGUT DINÀMIC FIX (Solució CLS) -->
+                <div id="info-spacer" class="mt-6 pt-4 border-t border-gray-700">
+                    
+                    <div id="dynamic-content-container" class="content-transition opacity-100 min-h-[220px] flex flex-col items-center justify-center text-center">
+                        <!-- Informació de la cançó o selecció de categories es renderitza aquí -->
+                    </div>
+                    
+                    <div id="category-container" class="content-transition opacity-100 min-h-[40px] text-center pt-2">
+                        <!-- Informació de la categoria es renderitza aquí -->
+                    </div>
+                </div>
+                <!-- /SECCIÓ DE CONTINGUT DINÀMIC FIX -->
+
+                <!-- Secció per pujar fitxers - OCULTA INICIALMENT AMB LA CLASSE 'hidden' -->
+                <div id="upload-section" class="my-4 w-full space-y-2 flex flex-col hidden">
+                    <input type="file" id="file-input" accept=".csv,.txt" multiple class="hidden"/>
+                    
+                    <!-- CONTENIDOR FLEX PER AL BOTÓ PUJAR -->
+                    <div class="flex items-center space-x-2">
+                        <!-- El botó d'instruccions estava aquí, però s'ha mogut a la capçalera -->
+                        
+                        <!-- Botó Pujar Fitxers (ocupa l'espai restant) -->
+                        <button id="upload-button" class="flex-grow bg-gray-700/50 hover:bg-gray-700 text-white py-2.5 px-4 rounded-lg transition duration-300 ease-in-out">
+                            Pujar Fitxer(s) CSV/TXT
+                        </button>
+                    </div>
+                    
+                    <!-- LLISTA/ESTAT DELS FITXERS CARREGATS -->
+                    <div id="file-list" class="text-xs text-gray-400 mt-2 text-center min-h-[1.5rem]"></div>
+                </div>
+            </div> <!-- Fi info-and-setup -->
+        </div> <!-- Fi game-content-container -->
 
         <footer class="text-center text-gray-500 text-xs mt-6">
             <p class="my-0">Una app de XRG</p>
         </footer>
-    </div>
+    </div> <!-- Fi main-card -->
 
     <script>
         // --- Referències a elements del DOM ---
@@ -95,937 +183,22 @@
         const uploadButton = document.getElementById('upload-button');
         const fileInput = document.getElementById('file-input');
         const fileList = document.getElementById('file-list');
-        const uploadSection = document.getElementById('upload-section');
+        const uploadSection = document.getElementById('upload-section'); 
+        // REFERÈNCIES PER A RESPONSIVE
+        const mainCard = document.getElementById('main-card');
+        const toggleOrientationBtn = document.getElementById('toggle-orientation-btn');
 
         // --- Dades de les cançons del fitxer CSV intern (delimitat per ';') ---
-        const csvData = `
-Spotify;Titol;Cantant;Any;Tipus
-spotify:track:1or7R43FPk2oyNed5oTeOJ;Saca el guisky cheli;Desmadre 75;1998;Bàsic
-spotify:track:7o2CTH4ctstm8TNelqjb51;Sweet Child O' Mine;Guns N' Roses;1987;Bàsic
-spotify:track:2fuCquhmrzHpu5xcA1ci9x;Under Pressure - Remastered 2011;Queen, David Bowie;1982;Bàsic
-spotify:track:7inx0uAxXtUiyVuvoZRsc7;Quisiera ser;Duo Dinamico;1987;Bàsic
-spotify:track:7M6CFruBrM5x7u0lTMtm6r;Cómo Te Atreves;Morat;2016;Bàsic
-spotify:track:5MhsZlmKJG6X5kTHkdwC4B;I'm an Albatraoz;AronChupa, Little Sis Nora;2014;Bàsic
-spotify:track:14MgTooapmJdLlEMAr2zAM;Dilemma (feat. Kelly Rowland);Nelly, Kelly Rowland;2002;Bàsic
-spotify:track:3nvuPQTw2zuFAVuLsC9IYQ;Nothing Compares 2 U;Sinéad O'Connor;1990;Bàsic
-spotify:track:11d9oUiwHuYt216EFA2tiz;Ice Ice Baby;Vanilla Ice;1990;Bàsic
-spotify:track:6lGrDctccq26IsZ2MDTxZU;Amor, Amor;Lolita;2013;Bàsic
-spotify:track:0YZ3J8xzGwLOg4yEgST1YK;With A Little Help From My Friends;Joe Cocker;1969;Bàsic
-spotify:track:32gpJnMZkRafZdQvU7ZzR7;Lambada - Version 1989;Kaoma;1989;Bàsic
-spotify:track:6JNJERZGJwDVgkmbohBw7u;Self Control;Laura Branigan;1984;Bàsic
-spotify:track:7FwBtcecmlpc1sLySPXeGE;Dancing In the Dark;Bruce Springsteen;1984;Bàsic
-spotify:track:4QkQmdvFjEVvjc1ONi6t6N;Bailar Pegados;Sergio Dalma;1991;Bàsic
-spotify:track:3v1dCP3hk2djfWryqfp7sx;Caminando por la vida;Melendi;2005;Bàsic
-spotify:track:2374M0fQpWi3dLnB54qaLX;Africa;TOTO;1982;Bàsic
-spotify:track:4d6eqRtpDX7tydHJGDZUBQ;She Drives Me Crazy;Fine Young Cannibals;1988;Bàsic
-spotify:track:0Gw9QC3RqHmTdGqHIWLHb6;La Isla del Amor (feat. Maki);Demarco Flamenco, Maki;2017;Bàsic
-spotify:track:2G0GextMwZJLkNxcSZ7ZJ3;(What A) Wonderful World - Mono;Sam Cooke;1960;Bàsic
-spotify:track:0Gx4VrHzS7pZOEAGrmXXBH;La Bicicleta;Carlos Vives, Shakira;2017;Bàsic
-spotify:track:42ydLwx4i5V49RXHOozJZq;Scars To Your Beautiful;Alessia Cara;2016;Bàsic
-spotify:track:7lnlxvKtaHz3JqGxZDl6Wy;Dile - Remastered;Luis Aguile;2008;Bàsic
-spotify:track:20I6sIOMTCkB6w7ryavxtO;Call Me Maybe;Carly Rae Jepsen;2012;Bàsic
-spotify:track:5oQadhkuEdEhtdVn0QceyZ;Se fué;Laura Pausini;1994;Bàsic
-spotify:track:1qPbGZqppFwLwcBC1JQ6Vr;Wonderwall;Oasis;1995;Bàsic
-spotify:track:27SdWb2rFzO6GWiYDBTD9j;Cheap Thrills;Sia;2016;Bàsic
-spotify:track:5vFFwU909VMZIBA7sZPtW0;Super Freak;Rick James;1981;Bàsic
-spotify:track:2PpruBYCo4H7WOBJ7Q2EwM;Hey Ya!;Outkast;2003;Bàsic
-spotify:track:4oW1lGOw5Q5OLvoJv92qoE;I Can Help;Billy Swan;1998;Bàsic
-spotify:track:3UI9I3e1g1y5T3SMfdgfGO;Colgando en tus manos (con Marta Sánchez);Carlos Baute, Marta Sánchez;2009;Bàsic
-spotify:track:4uaffKRsN1NEQWVmkwMDAZ;Black is Black;Los Bravos;1966;Bàsic
-spotify:track:5IKLwqBQG6KU6MP2zP80Nu;We Are Family - 1995 Remaster;Sister Sledge;1979;Bàsic
-spotify:track:3lpF8AbTteK4bXXZMhm31n;Un Ramito de Violetas;Cecilia;2013;Bàsic
-spotify:track:1oaPnvUccVzyjsKFkuE7oA;Soy rebelde;Jeanette;2011;Bàsic
-spotify:track:35tzxthMBglBMjmZ7Fn1hj;Gloria;Umberto Tozzi;1979;Bàsic
-spotify:track:4BFMQ15vXr626UOoZL8bUI;"(I've Had) The Time of My Life - From ""Dirty Dancing"" Soundtrack";Bill Medley, Jennifer Warnes;2004;Bàsic
-spotify:track:3K7Q9PHUWPTaknlbFPThn2;Celebration;Kool & The Gang;1980;Bàsic
-spotify:track:2gQaQUhDCNGfBVXTvxAmXQ;Shout;Tears For Fears;1985;Bàsic
-spotify:track:2Fxmhks0bxGSBdJ92vM42m;bad guy;Billie Eilish;2019;Bàsic
-spotify:track:6PypGyiu0Y2lCDBN1XZEnP;Everybody Hurts;R.E.M.;1992;Bàsic
-spotify:track:2oI6d7XcMz1AMTQhDopV5J;Resistiré;Duo Dinamico;1988;Bàsic
-spotify:track:2IofpcCv3PjgZ5AjX446fi;Dime Que Me Quieres;Tequila;1980;Bàsic
-spotify:track:4B6ko7lt1sUtyFzBDF4yfK;Pajaros de Barro;Manolo Garcia;1998;Bàsic
-spotify:track:2mTiKaGdMPA4wfOGGUroE5;When a Man Loves a Woman - Mono;Percy Sledge;1966;Bàsic
-spotify:track:30ddpolNHwXlrS5XO8MiiO;Marta, Sebas, Guille y los demás;Amaral;2005;Bàsic
-spotify:track:1uAjXdRxH2PBCKGSWPagGJ;Libre;Nino Bravo;1976;Bàsic
-spotify:track:57iDDD9N9tTWe75x6qhStw;Bitter Sweet Symphony - Remastered 2016;The Verve;1997;Bàsic
-spotify:track:2tUBqZG2AbRi7Q0BIrVrEj;I Wanna Dance with Somebody (Who Loves Me);Whitney Houston;1987;Bàsic
-spotify:track:42VgiRyg0YjtRVLiPFNxPJ;Zapatillas;El Canto Del Loco;2005;Bàsic
-spotify:track:0KMGf0ebdR8aazf1PoHEdb;Guajira Guantanamera;Joseito Fernández;2012;Bàsic
-spotify:track:7COfe3P7KgfwDwIRB8LIDw;Mi Gente;J Balvin, Willy William;2018;Bàsic
-spotify:track:2Cd9iWfcOpGDHLz6tVA3G4;Waka Waka (This Time for Africa) [The Official 2010 FIFA World Cup (TM) Song] (feat. Freshlyground);Shakira, Freshlyground;2010;Bàsic
-spotify:track:2pag2vElkdroT8hIO4Gozi;It's a Heartache;Bonnie Tyler;2006;Bàsic
-spotify:track:2Hdf9j4LFuisyOpf9ZjNbC;La Felicidad;Palito Ortega;2001;Bàsic
-spotify:track:3JFFnk9XQ9PKNd6ueBc2RK;Malo;Bebe;2004;Bàsic
-spotify:track:06hsdMbBxWGqBO0TV0Zrkf;Cotton Eye Joe;Rednex;1994;Bàsic
-spotify:track:2vwlzO0Qp8kfEtzTsCXfyE;Wrecking Ball;Miley Cyrus;2013;Bàsic
-spotify:track:5ZrDlcxIDZyjOzHdYW1ydr;Barbie Girl;Aqua;1997;Bàsic
-spotify:track:5jE48hhRu8E6zBDPRSkEq7;All About That Bass;Meghan Trainor;2015;Bàsic
-spotify:track:6mUQ6NW9WRcCuSsi4kzdlf;Un Rayo de Sol;Los Diablos;2013;Bàsic
-spotify:track:4SGBuq37Ol4HJr7pQqFMKa;I Got You Babe;Sonny & Cher;1965;Bàsic
-spotify:track:3yzHIAzk3zVE1WgspS8W21;Vivir Así Es Morir de Amor;Camilo Sesto;1978;Bàsic
-spotify:track:2LScqpywMqGcnum6nNaxXX;Yes Sir, I Can Boogie;Baccara;1998;Bàsic
-spotify:track:0bEA0mMgXheXnahvIbIQfg;Bailando - Spanish Version;Enrique Iglesias, Descemer Bueno, Gente De Zona;2015;Bàsic
-spotify:track:3DamFFqW32WihKkTVlwTYQ;Fireflies;Owl City;2009;Bàsic
-spotify:track:11mwFrKvLXCbcVGNxffGyP;Genie In a Bottle;Christina Aguilera;1999;Bàsic
-spotify:track:6pPWRBubXOBAHnjl5ZIujB;The Best;Tina Turner;1989;Bàsic
-spotify:track:33LC84JgLvK2KuW43MfaNq;"My Heart Will Go On - Love Theme from ""Titanic""";Céline Dion;1997;Bàsic
-spotify:track:1Hud0EePGdcqcHIIDksq3R;Volando Voy;Kiko Veneno;1992;Bàsic
-spotify:track:4sCSUQnWQ6HJsOMjfPicdn;Danza Kuduro;Don Omar, Lucenzo;2011;Bàsic
-spotify:track:1mXuMM6zjPgjL4asbBsgnt;Firework;Katy Perry;2010;Bàsic
-spotify:track:6120uJUyg6QDzaAJUosTx5;Knock On Wood;Amii Stewart;2012;Bàsic
-spotify:track:1FjyT8FTmnvelt4dNwp2Jx;Chacachá del tren (remastered);Hermanas Fleta;2005;Bàsic
-spotify:track:5JOVSWohrjXW0BFTboh8XO;Don't Go;Yazoo;1982;Bàsic
-spotify:track:7idTMG6EKZy0531lIx8RJ5;"Rigoletto: ""La Donna E' Mobile""";Enrico Caruso;2011;Bàsic
-spotify:track:6habFhsOp2NvshLv26DqMb;Despacito;Luis Fonsi, Daddy Yankee;2019;Bàsic
-spotify:track:4CeeEOM32jQcH3eN9Q2dGj;Smells Like Teen Spirit;Nirvana;1991;Bàsic
-spotify:track:2i7SlECYIAsT72FpLUU1Uj;Me Gustas Mucho;Rocío Dúrcal;1992;Bàsic
-spotify:track:1kXTqAV4IshAbOQpWl9PkE;Hay que venir al sur;Raffaela Carrá;2013;Bàsic
-spotify:track:0UAJH0k4k3slcE83a9UGCe;Lola;The Kinks;1970;Bàsic
-spotify:track:6z5Xrx58p5Bs18RIe6KXbI;Lo Que Pasó, Pasó;Daddy Yankee;2004;Bàsic
-spotify:track:0wAyDBh0ujohCsYeXBtDLF;In the Mood - 2006 Remastered Version;Glenn Miller;1939;Bàsic
-spotify:track:1hj6nYHeGclSY0VNTHMi27;Amante Bandido;Miguel Bosé;1984;Bàsic
-spotify:track:7BKLCZ1jbUBVqRi2FVlTVw;Closer;The Chainsmokers, Halsey;2016;Bàsic
-spotify:track:1c0zagykmGPDYuxJeDqZhJ;World Hold on (Children of the Sky) [Radio Edit];Bob Sinclar, Steve Edwards;2006;Bàsic
-spotify:track:6dHTkQYY3zdR9i9Nj0IGVW;"I Like To Move It (feat. The Mad Stuntman) - Erick ""More"" Album Mix";Reel 2 Real, The Mad Stuntman, Erick Morillo;1994;Bàsic
-spotify:track:5tsDJt6Riyi26vowpb6FLs;Tu Enemigo;Pablo López, Juanes;2015;Bàsic
-spotify:track:4QlzkaRHtU8gAdwqjWmO8n;Friday I'm In Love;The Cure;1992;Bàsic
-spotify:track:7egg6pLQbewWGalcr241Rz;Tengo una Debilidad;Antonio Machín;2012;Bàsic
-spotify:track:0M2tanh26PWePnaGVV3h3y;Salta!!!;Tequila;1981;Bàsic
-spotify:track:77eDrs7w2utSdbBdpbefol;No me importa nada;Luz Casal;1989;Bàsic
-spotify:track:1F43XlPBiwAUUIhrUGzylO;Never Ending Story;Limahl;2009;Bàsic
-spotify:track:0Uzf6J45f8K4qaVppjVb6N;Mi Carro;Manolo Escobar;1991;Bàsic
-spotify:track:4PRJD9T23GQKQYKhJQcGGY;Aquí No Hay Playa;The Refrescos;1989;Bàsic
-spotify:track:1OxcIUqVmVYxT6427tbhDW;Fly Away;Lenny Kravitz;1998;Bàsic
-spotify:track:6kWJvPfC4DgUpRsXKNa9z9;All That She Wants;Ace of Base;1993;Bàsic
-spotify:track:2YWjW3wwQIBLNhxWKBQd16;Lean On (feat. MØ & DJ Snake);Major Lazer, MØ, DJ Snake;2015;Bàsic
-spotify:track:7aQjPecQdIuNd1sz3KCDhD;Lovefool;The Cardigans;1996;Bàsic
-spotify:track:6Tnnk7MAnZiDx67DJN2hnx;Mi gran noche;Raphael;1967;Bàsic
-spotify:track:5zHvsFZoCzLmhbRbYDkg42;La Revolución Sexual;La Casa Azul;2007;Bàsic
-spotify:track:3cbV252akVZInSvJk7jAYX;Flashdance...What a Feeling - Radio Edit;Irene Cara;1983;Bàsic
-spotify:track:4w1lzcaoZ1IC2K5TwjalRP;A Thousand Miles;Vanessa Carlton;2002;Bàsic
-spotify:track:4oCGALJSQZxLnsnPPgShln;Veneno en la Piel;Radio Futura;1990;Bàsic
-spotify:track:2uQPeyP4Y15jrlJbc5SRwm;Soy minero;Antonio Molina;1996;Bàsic
-spotify:track:4kYdaN5ECfrCPPuUUiCiTr;Que Hace una Chica Como Tu en un Sitio Como Este;Burning;2013;Bàsic
-spotify:track:4Y6cDd4EPHcEbiUKdyvNwM;Macarena;Los Del Rio;1993;Bàsic
-spotify:track:1QEEqeFIZktqIpPI4jSVSF;More Than a Feeling;Boston;1976;Bàsic
-spotify:track:1w2Nnj1HEUgoOglVRWfZj8;Me cuesta tanto olvidarte;Mecano;1986;Bàsic
-spotify:track:27u17peWruKyUe7RfBglZC;El Reloj;Los Tres Caballeros;1994;Bàsic
-spotify:track:5P1JgHeCLAgZJx9oiDccza;Chica YeYe;Conchita Velasco;2009;Bàsic
-spotify:track:127QTOFJsJQp5LbJbu3A1y;Toosie Slide;Drake;2020;Bàsic
-spotify:track:2JzZzZUQj3Qff7wapcbKjc;See You Again (feat. Charlie Puth);Wiz Khalifa, Charlie Puth;2015;Bàsic
-spotify:track:4gphxUgq0JSFv2BCLhNDiE;Jailhouse Rock;Elvis Presley;1958;Bàsic
-spotify:track:1B0BQaSRHxhI0AUlItY3LK;MALAMENTE - Cap.1: Augurio;ROSALÍA;2018;Bàsic
-spotify:track:6DSvUZQdqtNfkJI4cAiUsM;The Twist;Chubby Checker;1962;Bàsic
-spotify:track:2EM9zpAc7PVeoAydmbfVIL;La Camisa Negra;Juanes;2004;Bàsic
-spotify:track:1Qo29QfhrhhhoniBr1WCDq;Que Nadie;Manuel Carrasco, Malú;2009;Bàsic
-spotify:track:6buqYaAyimysMjE8yuiaXy;Cuéntame;Formula V;1985;Bàsic
-spotify:track:5haXbSJqjjM0TCJ5XkfEaC;I Got You (I Feel Good);James Brown & The Famous Flames;1966;Bàsic
-spotify:track:2xUl8Bp6eLddk5mdv8I2Wo;Cuando me siento bien;Efecto Pasillo;2015;Bàsic
-spotify:track:1zusIxNqJu8i4g6P6hJ2Qa;Mercy;Duffy;2008;Bàsic
-spotify:track:1nUsGqyLqbOAnAtduWGNOU;El baúl de los recuerdos;Karina;1970;Bàsic
-spotify:track:1ExfPZEiahqhLyajhybFeS;The Lazy Song;Bruno Mars;2010;Bàsic
-spotify:track:5DIovqjO8pCMkA6L1FXrXl;Estando Contigo;Conchita Bautista;2013;Bàsic
-spotify:track:29opVIw8I1BOZntEn3Un2I;La Puerta de Alcalá;Ana Belén, Víctor Manuel;1979;Bàsic
-spotify:track:6naxalmIoLFWR0siv8dnQQ;Oops!...I Did It Again;Britney Spears;2000;Bàsic
-spotify:track:3ySFQwBgaHN2mlLxY6A0ic;You Can Get It If You Really Want;Jimmy Cliff;1995;Bàsic
-spotify:track:6iNBM60VQtPUUhkKfwa5KV;It's My Life;Bon Jovi;2010;Bàsic
-spotify:track:16k0xwujtU1eoSLEfofWQ8;Eloise;Tino Casal;1987;Bàsic
-spotify:track:7aSxNjoVoAwNL7HDAKwGtC;¿Y Cómo Es Él?;José Luis Perales;1982;Bàsic
-spotify:track:1xNcBAoUw8Hz6LqK2jt4Ff;Call on Me - Radio Mix;Eric Prydz;2004;Bàsic
-spotify:track:4waqcUQWdj0yH26STWl2Rq;Rosas;La Oreja de Van Gogh;2003;Bàsic
-spotify:track:1z3ugFmUKoCzGsI6jdY4Ci;Like a Prayer;Madonna;2009;Bàsic
-spotify:track:3G9RQLOSjsXVUDyQSv2PQR;Vivir Sin Aire;Maná;1992;Bàsic
-spotify:track:0Q0IVlqMV64kNLlwjPj0Hl;Killing Me Softly With His Song;Fugees, Ms. Lauryn Hill;1996;Bàsic
-spotify:track:0OteyYh6inrfcil1XGwC3r;Bailando;Alaska Y Los Pegamoides;1982;Bàsic
-spotify:track:2HpbDdD3JLpAPMJFYCeC6o;High (Remix);Maria Becerra, TINI, Lola Indigo;2020;Bàsic
-spotify:track:4LFwNJWoj74Yd71fIr1W8x;Right Here Waiting;Richard Marx;1989;Bàsic
-spotify:track:1suKCYjsR9rZKnFYM5uK1k;No Controles;Ole Ole;2010;Bàsic
-spotify:track:5yqiverYlKEA0ly96HPq01;Flying Free - Original Mix;Pont Aeri, Marian Dacal;1999;Bàsic
-spotify:track:2Uy6EhQXAYkXA6MohPgjpV;One More Time - Radio Edit [Short Radio Edit];Daft Punk;2000;Bàsic
-spotify:track:6x4tKaOzfNJpEJHySoiJcs;Mambo No. 5 (a Little Bit of...);Lou Bega;1999;Bàsic
-spotify:track:1PpOqYZsUCecuOfLELmgOI;Bésame Mucho;Emilio Tuero;2014;Bàsic
-spotify:track:19CmuECYssqkPWANF4nLWM;Para No Verte Más;La Mosca Tse-Tse;2000;Bàsic
-spotify:track:2dbaIpJoAk2hhrrX2ljKJo;Surfin' U.S.A. (Mono);The Beach Boys;1963;Bàsic
-spotify:track:5zyrEv4F3FaLECI8TOKpFM;Nel Blu Dipinto Di Blu;Domenico Modugno;2008;Bàsic
-spotify:track:4MzXwWMhyBbmu6hOcLVD49;DÁKITI;Bad Bunny, Jhayco;2020;Bàsic
-spotify:track:5ddFjrPG8NgQQ6xlOQIVd2;Tú Me Dejaste De Querer;C. Tangana, Niño de Elche, La Húngara;2021;Bàsic
-spotify:track:3QHMxEOAGD51PDlbFPHLyJ;Vivir Mi Vida;Marc Anthony;2013;Bàsic
-spotify:track:72TFWvU3wUYdUuxejTTIzt;Work;Rihanna, Drake;2016;Bàsic
-spotify:track:5WovBMPS14QCqKgBEM1PaO;Sobreviviré;Monica Naranjo;1994;Bàsic
-spotify:track:0yUsNnKCxe7r68qzEjbOaB;Carolina;M-Clan;2018;Bàsic
-spotify:track:51qi5dgc9CsotM87GmRkAX;Don't Leave Me This Way;Thelma Houston;1976;Bàsic
-spotify:track:5jUA1njy3h6ynHLvPdEVHt;Disco Inferno;The Trammps;1976;Bàsic
-spotify:track:79HTe42PihWUUq4BDjcuCq;Usted;Juan Magán, Mala Rodríguez;2018;Bàsic
-spotify:track:1Jaah2tmN9Hv81A87KZ1MU;Torn;Natalie Imbruglia;1997;Bàsic
-spotify:track:09lZ2Mx2NSpzy6KBpX2kDq;Gimme Hope Jo'Anna;Eddy Grant;2010;Bàsic
-spotify:track:78WVLOP9pN0G3gRLFy1rAa;Piano Man;Billy Joel;1973;Bàsic
-spotify:track:4MLBqAEzNN89o2M9h92Z26;Get Back - Remastered 2009;The Beatles;1970;Bàsic
-spotify:track:08HeIb9BidFjKROf9ptln0;Eres Tú;Mocedades;1994;Bàsic
-spotify:track:3XIEWK1V9n25PS9Vb6axj5;Born to Be Alive - The Original;Patrick Hernandez;1978;Bàsic
-spotify:track:1Wrzhfa5bNlqvsnCztz190;Devuélveme a mi chica;Hombres G;1985;Bàsic
-spotify:track:3XDeeP9wBZzGhIPZmLfEEx;Karma Chameleon;Culture Club;1983;Bàsic
-spotify:track:1Jwc3ODLQxtbnS8M9TflSP;Walk Like an Egyptian;The Bangles;2004;Bàsic
-spotify:track:4H1iMlEWKZmpKTHCZzDhju;You Can't Hurry Love;The Supremes;1966;Bàsic
-spotify:track:3Th2of8xIYyImVLXUbzaTp;Tenia Tanto Que Darte;Nena Daconte;2008;Bàsic
-spotify:track:0UY0JLj9kxOlgF6FHogCmX;Mala Vida;Mano Negra;1988;Bàsic
-spotify:track:7lQWRAjyhTpCWFC0jmclT4;Gangsta's Paradise;Coolio, L.V.;1995;Bàsic
-spotify:track:2knr7ikPt4l7bk92qS4ZXW;Euphoria;Loreen;2012;Bàsic
-spotify:track:2wvmkXG4foIJ2xUiwLhBjA;Moving;Macaco;2009;Bàsic
-spotify:track:3BdId1EhcMX7yAzwzQJLAD;Barcelona;Freddie Mercury, Montserrat Caballé;2016;Bàsic
-spotify:track:3WMbD1OyfKuwWDWMNbPQ4g;Daddy Cool;Boney M.;1976;Bàsic
-spotify:track:1r299qCKBLgUS9XJ9m1kEx;Moves Like Jagger;Maroon 5, Christina Aguilera;2015;Bàsic
-spotify:track:3PQLYVskjUeRmRIfECsL0X;No Woman No Cry;Bob Marley & The Wailers;1974;Bàsic
-spotify:track:5QfmCmdL4qnzqMz5Z0gvzV;Te Estoy Amando Locamente;Las Grecas;1974;Bàsic
-spotify:track:0TK2YIli7K1leLovkQiNik;Señorita;Shawn Mendes, Camila Cabello;2019;Bàsic
-spotify:track:2goLsvvODILDzeeiT4dAoR;Believe;Cher;1998;Bàsic
-spotify:track:5IVuqXILoxVWvWEPm82Jxr;Crazy In Love (feat. Jay-Z);Beyoncé, JAY-Z;2003;Bàsic
-spotify:track:1kgBwPl0UUHz97Krp65zF4;Me encanta - I Love It;Nancys Rubias;2013;Bàsic
-spotify:track:7mitXLIMCflkhZiD34uEQI;Party Rock Anthem;LMFAO, Lauren Bennett, GoonRock;2011;Bàsic
-spotify:track:0DjSa6czo5ywsf6iCtZW5A;Cannabis;Ska-P;1996;Bàsic
-spotify:track:1sMgCr1RH0HfAazVZt9xmZ;El Secreto de las Tortugas;Maldita Nerea;2009;Bàsic
-spotify:track:2tpWsVSb9UEmDRxAl1zhX1;Counting Stars;OneRepublic;2013;Bàsic
-spotify:track:7BYqVvoXpQFhs4jJ0qqNZt;Entre dos tierras;Heroes Del Silencio;1990;Bàsic
-spotify:track:1EjQRTG53jsinzk2xlVVJP;Enjoy the Silence - 2006 Remaster;Depeche Mode;1990;Bàsic
-spotify:track:4wzt5Rrk3W98pHXAqutuJw;Talk;Coldplay;2005;Bàsic
-spotify:track:3unsLiH5FXmaDWtT5Imolu;Fallin';Alicia Keys;2001;Bàsic
-spotify:track:1ApXNkjfjxkSDoezO8Kh8g;La, La, La;Massiel;1966;Bàsic
-spotify:track:7gEpTMp9MQc1uJwivtL37R;Do Wah Diddy Diddy;Manfred Mann;1964;Bàsic
-spotify:track:3JOXwHPhtdRU3kYKcf64Gj;Pero a tu lado;Los Secretos;1995;Bàsic
-spotify:track:3d9DChrdc6BOeFsbrZ3Is0;Under the Bridge;Red Hot Chili Peppers;1991;Bàsic
-spotify:track:3U4isOIWM3VvDubwSI3y7a;All of Me;John Legend;2013;Bàsic
-spotify:track:0OMRAvrtLWE2TvcXorRiB9;La Gozadera (feat. Marc Anthony);Gente De Zona, Marc Anthony;2016;Bàsic
-spotify:track:1PZrHbJjt5t7dP9OGRxcD0;Dale Don Dale;Don Omar;2003;Bàsic
-spotify:track:59bqZ237MW9CvFRLqu6Dgg;Te he echado de menos - Radio Edit;Pablo Alborán;2011;Bàsic
-spotify:track:5U4pDBaeq2Jl2dKuWWUSsh;Ave María;David Bisbal;2002;Bàsic
-spotify:track:5vj59ONIVbyhcrI8ZSwoRo;Sofia;Alvaro Soler;2016;Bàsic
-spotify:track:4JOsL8WntMIwDeNQlKAwdA;Me Colé en una Fiesta;Mecano;1998;Bàsic
-spotify:track:17qIyxyDWmNP7Rn11eprMt;Tequila;The Champs;1958;Bàsic
-spotify:track:0PCGfA36HrVPmsBZJ57zOU;"Love Is All Around - From ""Four Weddings And A Funeral""";Wet Wet Wet;1995;Bàsic
-spotify:track:1JSTJqkT5qHq8MDJnJbRE1;Every Breath You Take;The Police;1983;Bàsic
-spotify:track:4unOsvr9C2NqI9aJXrxpCy;Sirenas;Taburete;2016;Bàsic
-spotify:track:6zdXA5yUvKnoTJwyZCnYOM;Sabor de amor - Versión 1988;Danza Invisible;1988;Bàsic
-spotify:track:3Ud6fFep5ZlXzRWw6Sm8no;Walk Of Life;Dire Straits;1985;Bàsic
-spotify:track:5adqS3stLaSPAEOszOnpXG;DUELE EL CORAZON;Enrique Iglesias, Wisin;2021;Bàsic
-spotify:track:5xzdDMhFYiuUONB0Mha9VS;The Locomotion;Little Eva;1962;Bàsic
-spotify:track:2LsbizbOeNa4x6qsi2jAMb;La flaca;Jarabe De Palo;1996;Bàsic
-spotify:track:0wQCKR9OFjYu5Kzrk7WivJ;Corazón partío;Alejandro Sanz;1997;Bàsic
-spotify:track:1s4hyUFWmLWiAamsclb4xA;See You Later, Alligator;Bill Haley & His Comets;1991;Bàsic
-spotify:track:7EZC6E7UjZe63f1jRmkWxt;Zombie;The Cranberries;1994;Bàsic
-spotify:track:1eCie6lwjb4crxeAvkRaSi;Y Nos Dieron las Diez;Joaquín Sabina;1992;Bàsic
-spotify:track:1VB4sadHjFcFklHcZuoROi;Como Camarón;Estopa;1999;Bàsic
-spotify:track:3uU6dqBjVKRTPis0RrTaT4;Las de la Intuición;Shakira;2005;Bàsic
-spotify:track:5QhOF5HXgZ0OFUZSE5kEv1;Nada Fue Un Error;Coti, Andrés Calamaro;2003;Bàsic
-spotify:track:1eRgClFGphd2MgpyIBsbfS;¡Chas! Y aparezco a tu lado;Alex Y Christina;1988;Bàsic
-spotify:track:3OeUlriM0EZHdWleJtjoVr;Got My Mind Set On You - Remastered 2004;George Harrison;1987;Bàsic
-spotify:track:0QQHPRbgLJJ5XNzJV1l9BW;María;Ricky Martin;1995;Bàsic
-spotify:track:5dg7OfEwTVvUZfqt24ObwI;Sólo Se Vive una Vez;Azucar Moreno;1997;Bàsic
-spotify:track:7e89621JPkKaeDSTQ3avtg;Sweet Home Alabama;Lynyrd Skynyrd;1974;Bàsic
-spotify:track:7LpS82vPDLgZAHWRtWBBRj;Ni tú ni nadie;Alaska Y Dinarama;1984;Bàsic
-spotify:track:5R8dQOPq8haW94K7mgERlO;Poker Face;Lady Gaga;2008;Bàsic
-spotify:track:0Ouv1zi0SXDnFtREEsps4K;Flamenco;Los Brincos;1964;Bàsic
-spotify:track:2LjiPAQOVazT8sRyXL3XRs;Informer;Snow;1993;Bàsic
-spotify:track:6gMyJAtpnAOU92I9hjpSNe;Sueño Su Boca;Raul;2001;Bàsic
-spotify:track:5zWZ9iNevP0397xB3jWV2z;Brother Louie;Modern Talking;1986;Bàsic
-spotify:track:48i055G1OT5KxGGftwFxWy;Oh, Pretty Woman;Roy Orbison;1962;Bàsic
-spotify:track:1k4kMMTPN5Yc0KdMxtMTuj;Los Chicos Con las Chicas;Los Bravos;1967;Bàsic
-spotify:track:4Tv8mqQc83OsQVXO4I0FTA;Lloverá y yo veré;La Pegatina;2013;Bàsic
-spotify:track:4awJGQ6TIS542X4XS7PWu7;A Tu Vera;Lola Flores;1991;Bàsic
-spotify:track:20WaSPMyeIO7NntPpn1FM5;Desesperada;Marta Sánchez;1993;Bàsic
-spotify:track:0KM2y796j63t5RHhvRUxld;Relax, Take It Easy;MIKA;2006;Bàsic
-spotify:track:74anwTmdyvA3f8RUtCQqKD;Déjame;Los Secretos;1981;Bàsic
-spotify:track:0Fyj9w0HVfjoxm9S8nGClt;Orinoco Flow;Enya;2001;Bàsic
-spotify:track:57Y3UccJEJqT8w8RWkUAz0;Upside Down;Diana Ross;1980;Bàsic
-spotify:track:4OSBTYWVwsQhGLF9NHvIbR;Rolling in the Deep;Adele;2011;Bàsic
-spotify:track:4chpfrjIqrOPshlDU4ZrKe;Chica de ayer;Nacha Pop;1980;Bàsic
-spotify:track:2DnJjbjNTV9Nd5NOa1KGba;You're So Vain;Carly Simon;1972;Bàsic
-spotify:track:7H8zey5My6uNdD2TxeCb9F;Don't Speak;No Doubt;1995;Bàsic
-spotify:track:35hfuechuOqaW31ogdauO7;It's In The Kiss (The Shoop Shoop Song);Betty Everett;2010;Bàsic
-spotify:track:1ILbD4eWKWvg8ub5qJyBTP;Joyride;Roxette;1991;Bàsic
-spotify:track:5xXYuYk2CzHfk3kLKYmRRb;Ni Una Sola Palabra;Paulina Rubio;2006;Bàsic
-spotify:track:7j74lucZ59vqN67Ipe2ZcY;Maneater;Daryl Hall & John Oates;1982;Bàsic
-spotify:track:0aGKNekx2JAxGzza802fnC;The Ketchup Song (Aserejé) - Spanish Version;Las Ketchup;2002;Bàsic
-spotify:track:3Emr4aPhkNoMHPF5N5i6QD;Campanera;Ana Maria;1993;Bàsic
-spotify:track:3N4DI1vuTSX1tz7fa2NQZw;Rehab;Amy Winehouse;2006;Bàsic
-spotify:track:4qEHMJyER7OntYTtPsIT1W;11 Razones;Aitana;2020;Bàsic
-spotify:track:44AyOl4qVkzS48vBsbNXaC;Can't Help Falling in Love;Elvis Presley;1961;Bàsic
-spotify:track:3Fzlg5r1IjhLk2qRw667od;Dancing in the Moonlight;Toploader;2000;Bàsic
-spotify:track:3iB8eciGU9vZkaDYkz7Ir9;Bamboleo;Gipsy Kings;1987;Bàsic
-spotify:track:6b37xrsNCWYIUphFBazqD6;Me Gustas Tú;Manu Chao;2001;Bàsic
-spotify:track:4FdwRmlzP5KGM7OewGBYiu;Olvídame y Pega la Vuelta;Pimpinela;1982;Bàsic
-spotify:track:017PF4Q3l4DBUiWoXk4OWT;Break My Heart;Dua Lipa;2020;Bàsic
-spotify:track:6uW0PIRcyZLvkoonm763xD;Contando Lunares (feat. Cruz Cafuné);Don Patricio, Cruz Cafuné;2019;Bàsic
-spotify:track:7s25THrKz86DM225dOYwnr;Respect;Aretha Franklin;1967;Bàsic
-spotify:track:6mOZfn6CVXsX1Tt0l3thm3;Sin documentos;Los Rodriguez;1996;Bàsic
-spotify:track:7qiZfU4dY1lWllzX7mPBI3;Shape of You;Ed Sheeran;2017;Bàsic
-spotify:track:7HKez549fwJQDzx3zLjHKC;Start Me Up - Remastered 2009;The Rolling Stones;1981;Bàsic
-spotify:track:1q8NdCAQ9QUjpYiqzdd3mv;Atrévete-Te-Te;Calle 13;2005;Bàsic
-spotify:track:74mVYAylZcHEY4WVFoFplV;Space Oddity - 1999 Remaster;David Bowie;2002;Bàsic
-spotify:track:2LpCMTQ8VM1ssTdfLjeyzQ;Pena Penita Pena;Lola Flores;1991;Bàsic
-spotify:track:2IHaGyfxNoFPLJnaEg4GTs;"What Is Love - 7"" Mix";Haddaway;1993;Bàsic
-spotify:track:02dphTJYUQ9pmdNC52iyOz;Fiesta Pagana;Mägo de Oz;2000;Bàsic
-spotify:track:2zNDRGoRkNEkMhO5fcGTMv;Sarandonga;Lolita;2001;Bàsic
-spotify:track:3VNxbWlw9oVvxSnSbeiCBb;Cadillac solitario;Loquillo;2009;Bàsic
-spotify:track:3hlWUNjAlbZ6nOjAbrivBv;Princesas;Pereza;2005;Bàsic
-spotify:track:2Ms33RTRCT6gArrpcrPxmo;Feel;Robbie Williams;2002;Bàsic
-spotify:track:1he4G9w0zh5GokInpOSINW;Ni La Hora;Ana Guerra, Juan Magán;2018;Bàsic
-spotify:track:1dgi28o666VmqNP1JALauv;La Escoba;Los Sirex;1964;Bàsic
-spotify:track:6kFowCmp5RNQhsK8LzC0gp;Mis Manos en Tu Cintura;Adamo;1995;Bàsic
-spotify:track:5xv4ggemGPNpowZAMwEYHH;Girlfriend - Radio Edit;Avril Lavigne;2007;Bàsic
-spotify:track:1gNXYvLc14OmqK6gSJKLUM;Como una Ola;Rocío Jurado;1999;Bàsic
-spotify:track:61VeJ59zufLceZXb1SSVKu;Help, áyudame;Tony Ronald;2001;Bàsic
-spotify:track:1SOAN58QwnQABl2SND1wMh;Congratulations - 1998 Remaster;Cliff Richard;2008;Bàsic
-spotify:track:6fw12s3vAJQAt7lbICodwC;"I Will Survive - Original 7"" Version";Gloria Gaynor;1993;Bàsic
-spotify:track:3Dy4REq8O09IlgiwuHQ3sk;Waterloo;ABBA;1974;Bàsic
-spotify:track:2c3sKqWYVJ0NsE3elgRhKH;Dragostea Din Tei;O-Zone;2004;Bàsic
-spotify:track:0GVQMLYWayDvznAkyz4esU;Tres Veces Guapa;Jorge Sepúlveda;2015;Bàsic
-spotify:track:2cHbN7OosXb4pA20G9Jcyg;Live And Let Die - Main Title;Paul McCartney, Wings;1987;Bàsic
-spotify:track:5dXJ1SoksFkgdx3yxIoYNO;You're The First, The Last, My Everything;Barry White;1974;Bàsic
-spotify:track:7Bewui7KtaMzROeteRitRz;Mediterráneo;Joan Manuel Serrat;1971;Bàsic
-spotify:track:0VjIjW4GlUZAMYd2vXMi3b;Blinding Lights;The Weeknd;2020;Bàsic
-spotify:track:6Pgkp4qUoTmJIPn7ReaGxL;Without You (feat. Sandro Cavazza);Avicii, Sandro Cavazza;2017;Bàsic
-spotify:track:7jhKkbM3KZvnuqzMX5fADH;In the Summertime;Mungo Jerry;1971;Bàsic
-spotify:track:03UrZgTINDqvnUMbbIMhql;Gangnam Style (강남스타일);PSY;2012;Bàsic
-spotify:track:07nrFSbS6ht0jMNpTpMfsg;Soy un Truhán, Soy un Señor;Julio Iglesias;1998;Bàsic
-spotify:track:2T3jgoAMbBXiMMD8pSc6QL;This Is The Life;Amy Macdonald;2007;Bàsic
-spotify:track:4eJikwHYHJ3yMg1tvS1Mom;Chiquilla;Seguridad Social;1991;Bàsic
-spotify:track:71yCMlsD6qbD7NmNUEoVNR;Ca plane pour moi;Plastic Bertrand;1998;Bàsic
-spotify:track:5ZULALImTm80tzUbYQYM9d;Dance Monkey;Tones And I;2019;Bàsic
-spotify:track:5N5k9nd479b1xpDZ4usjrg;Promises (with Sam Smith);Calvin Harris, Sam Smith, Jessie Reyez;2018;Bàsic
-spotify:track:1rfofaqEpACxVEHIZBJe6W;Havana (feat. Young Thug);Camila Cabello, Young Thug;2018;Bàsic
-spotify:track:1tmwswvJnwOIrskyCKVsgv;Todos los días sale el sol;Bongo Botrako;2010;Bàsic
-spotify:track:0mGvaKpwLYoybnIoboC3uS;Yo Te Esperaré;Cali Y El Dandee;2012;Bàsic
-spotify:track:6xunIjRX7KeF4OxFkpPeZO;Tómbola;Marisol;2013;Bàsic
-spotify:track:2aI21FnmY7TJVKeMaoQZ0t;Say It Right;Nelly Furtado;2006;Bàsic
-spotify:track:059G9tpE3kl6wz3kiddaN0;Vivo Cantando;Salomé;2003;Bàsic
-spotify:track:4bE1OpWxbtFOdNDF7rJMta;En el Amor Todo Es Empezar (A far l'amore comincia tu) - Spanish Version;Raffaella Carrà;2020;Bàsic
-spotify:track:0gmbgwZ8iqyMPmXefof8Yf;How You Remind Me;Nickelback;2001;Bàsic
-spotify:track:3ROd8cCRdRJpeh6P2zTAJk;Me Quedo Contigo;Los Chunguitos;1991;Bàsic
-spotify:track:1RouRzlg8OKFeqc6LvdxmB;Felices los 4;Maluma;2018;Bàsic
-spotify:track:2nwCO1PqpvyoFIvq3Vrj8N;These Boots Are Made For Walkin';Nancy Sinatra;1966;Bàsic
-spotify:track:2aEeghgUcnu75tzcolFMfs;La Bamba - Single Version;Ritchie Valens;1959;Bàsic
-spotify:track:4xuQ7KieQmHXiYdh965WQR;Canta y Sé Feliz;Peret;2001;Bàsic
-spotify:track:63OFKbMaZSDZ4wtesuuq6f;Born To Be Wild;Steppenwolf;1968;Bàsic
-spotify:track:5fc3XWSpJo6jTlbjnhGOJQ;Eva Maria;Formula V;1985;Bàsic
-spotify:track:2GbePPrWWSRxcmW6QRSPae;Piece of My Heart;Erma Franklin;2009;Bàsic
-spotify:track:1qDrWA6lyx8cLECdZE7TV7;Somebody That I Used To Know;Gotye, Kimbra;2011;Bàsic
-spotify:track:3sQtyO2P7q9qfkXCGVtAUp;Me Vuelvo Loco;Tequila;1979;Summer Party
-spotify:track:3h9GLvqH55IAqUD0kvGE6X;Samba Megamix (12 version);Two Man Sound;2006;Summer Party
-spotify:track:0mF5QmsOJq5w3FqGMjycII;Shout To The Top - USA Remix;The Style Council, Jay Mark;1985;Summer Party
-spotify:track:2a0xS8Vy4k6rXm8qcR3Ljw;Mejor;Los Brincos;1966;Summer Party
-spotify:track:6cRvHL1jwsAktcEcukPYmp;Eso Que Tú Me Das;Jarabe De Palo;2020;Summer Party
-spotify:track:2NF8A7C6tICScdRaZ0BrEe;Katchi - Ofenbach vs. Nick Waterhouse;Ofenbach, Nick Waterhouse;2017;Summer Party
-spotify:track:0gyq9BgV4Veyy06r8cxDII;¡No Me Toques Las Palmas Que Me Conozco!;María Isabel;2004;Summer Party
-spotify:track:4Y6cDd4EPHcEbiUKdyvNwM;Macarena;Los Del Rio;1993;Summer Party
-spotify:track:5CeL9C3bsoe4yzYS1Qz8cw;Girls & Boys;Blur;2000;Summer Party
-spotify:track:1HOMkjp0nHMaTnfAkslCQj;My Sharona;The Knack;1979;Summer Party
-spotify:track:5p3JunprHCxClJjOmcLV8G;Walk On the Wild Side;Lou Reed;1972;Summer Party
-spotify:track:1nQIr8PP2btqnjSBvHCj8K;Bonito Es;Los Sencillos;1991;Summer Party
-spotify:track:4ZXGwom3XGq29jQmaq0CBb;El Chiringuito - Remasterizado;Georgie Dann;1988;Summer Party
-spotify:track:4LZnURUGyflbOMSYG9aW9d;Que Difícil es Hacer el Amor en un Simca 1000;Los Inhumanos;1988;Summer Party
-spotify:track:6qD5Tep3hEoRDQUpyrrDLK;No Estamos Lokos - Kalikeño;Ketama;1995;Summer Party
-spotify:track:3S0OXQeoh0w6AY8WQVckRW;I'm Yours;Jason Mraz;2008;Summer Party
-spotify:track:0AFJOoRQFlo10Vm1p6BRjg;El calor del amor en un bar;Gabinete Caligari;1986;Summer Party
-spotify:track:1V7FkKnkA3Gq1fkGayioSI;Galilea;Sergio Dalma;1991;Summer Party
-spotify:track:72psvScOYelPAVpe9k1B9y;Ay Mamá;Rigoberta Bandini;2022;Summer Party
-spotify:track:7AzFID6u1b3zIWbd9pb8Dk;Summer in the City - Remastered;The Lovin' Spoonful;1966;Summer Party
-spotify:track:59iTRaqCVSG6E382GYghBY;Agapimú (feat. Ana Belén);Ojete Calor, Ana Belén;2020;Summer Party
-spotify:track:27N8TFqYeZhdrgFITRJncP;Mama Africa (feat. Angélique Kidjo et Youssou Ndour);Kids United, Angelique Kidjo, Youssou N'Dour;2017;Summer Party
-spotify:track:7tqhbajSfrz2F7E1Z75ASX;Ain't No Mountain High Enough;Marvin Gaye, Tammi Terrell;1967;Summer Party
-spotify:track:5JdLUE9D743ob2RtgmVpVx;Makeba;Jain;2016;Summer Party
-spotify:track:1YwPNemawMgGe6sF4U0FTE;Suavemente;Elvis Crespo;2008;Summer Party
-spotify:track:3MktEQFErlU3BeJY1pFFU1;Follow The Leader;The Soca Boys, Van B. King;1998;Summer Party
-spotify:track:70JnnNNAxPjvZGPwjJfX47;El Fin del Mundo;La La Love You, Axolotes Mexicanos;2020;Summer Party
-spotify:track:5Hyr47BBGpvOfcykSCcaw9;"Holding Out for a Hero - From ""Footloose"" Soundtrack";Bonnie Tyler;1986;Summer Party
-spotify:track:0DMRKqrpd0QO4RWiEdMib0;You Know I'm No Good;Amy Winehouse;2006;Summer Party
-spotify:track:5OUYVbN1gbxz54XBgA4OID;Mueve Tus Caderas;Burning;1988;Summer Party
-spotify:track:5G1sTBGbZT5o4PNRc75RKI;Lonely Boy;The Black Keys;2011;Summer Party
-spotify:track:1H5IfYyIIAlgDX8zguUzns;Suspicious Minds;Elvis Presley;1969;Summer Party
-spotify:track:6M5CyesxNhZ9p1WWCwoc5a;Me Estoy Volviendo Loco;Azul Y Negro;2005;Summer Party
-spotify:track:7ooheiWgbyNtGOBTPbjNoq;I Want Your Love - 2018 Remaster;CHIC;1978;Summer Party
-spotify:track:4T5Y25pWs2pVZVcFIqFuf8;You Should Be Dancing;Bee Gees;1976;Summer Party
-spotify:track:7p8HVe22aGW1XtO1hoDHGo;99 Red Balloons;Nena;1984;Summer Party
-spotify:track:7eheoW4hxrH51ww2QePVwF;Gonna Make You Sweat (Everybody Dance Now) (feat. Freedom Williams);C & C Music Factory, Freedom Williams;1990;Summer Party
-spotify:track:6hHc7Pks7wtBIW8Z6A0iFq;Blue Monday;New Order;1987;Summer Party
-spotify:track:03xPLL0XcHnyuKGsTK5uSK;Baby I Don't Care;Transvision Vamp;1989;Summer Party
-spotify:track:5R2hNuiiwnKVAUNktF9j2Y;mariposas;sangiovanni, Aitana;2022;Summer Party
-spotify:track:3xi7tKuBss25X34eNwWac7;Bolillón;No Me Pises Que Llevo Chanclas;1996;Summer Party
-spotify:track:1v2zyAJrChw5JnfafSkwkJ;Shiny Happy People;R.E.M.;1991;Summer Party
-spotify:track:2Y90nL1ohB4sgYELDs7uNx;Glory Days;Bruce Springsteen;1984;Summer Party
-spotify:track:7EwISik6EOmK1CZhs68nsg;Años 80;Los Piratas;2001;Summer Party
-spotify:track:5LxvwujISqiB8vpRYv887S;I Want You Back;The Jackson 5;1969;Summer Party
-spotify:track:6j5LtifAnuTjTYvml61yFZ;Un Millón de Primaveras;Vicente Fernández;2007;Summer Party
-spotify:track:68JGom6rnaOviOQ8Ch4JgW;Fiesta;Raffaella Carrà;1999;Summer Party
-spotify:track:0pENfDf4UtQF2q2A4xSi27;My Heart Goes Boom;French Affair;2010;Summer Party
-spotify:track:1wZ7o1mZysv1l26ZWawVfW;Freedom! '90 - Remastered;George Michael;1990;Summer Party
-spotify:track:0GB4zJkbXdXBbdJPgudwDx;Baila Mi Corazón;Belanova;2007;Summer Party
-spotify:track:1uRKT2LRANv4baowBWHfDS;(We're Gonna) Rock Around The Clock;Bill Haley & His Comets;1955;Summer Party
-spotify:track:1qCHidBbWAgv3pn6UbZ4Lg;Don't Go Yet;Camila Cabello;2022;Summer Party
-spotify:track:2Foc5Q5nqNiosCNqttzHof;Get Lucky (Radio Edit) [feat. Pharrell Williams and Nile Rodgers];Daft Punk, Pharrell Williams, Nile Rodgers;2013;Summer Party
-spotify:track:5rfJ2Bq2PEL8yBjZLzouEu;Who Can It Be Now?;Men At Work;1981;Summer Party
-spotify:track:61UuPxxYUvacEH6SHIK3sU;Brown Sugar - Remastered 2009;The Rolling Stones;1971;Summer Party
-spotify:track:1msphInQ8bBBQGFZkll7FX;En Que Estrella Estara;Nena Daconte;2006;Summer Party
-spotify:track:0qe8ejgap3s39vLXc4K4dU;Salomé;Chayanne;1990;Summer Party
-spotify:track:76hfruVvmfQbw0eYn1nmeC;Cake By The Ocean;DNCE;2016;Summer Party
-spotify:track:1ArfDNJVfisvAaowOCkpVc;Supersexy Girl;Fundacion Tony Manero;2013;Summer Party
-spotify:track:0mlAOSILGRys2IbvyOT5VJ;Échame La Culpa;Luis Fonsi, Demi Lovato;2019;Summer Party
-spotify:track:6KTv0Z8BmVqM7DPxbGzpVC;Rock And Roll All Nite;KISS;1975;Summer Party
-spotify:track:62AuGbAkt8Ox2IrFFb8GKV;Sweet Caroline;Neil Diamond;1969;Summer Party
-spotify:track:1EA3Bs174OvPIu49qj14pu;El Baile de los Pajaritos;María Jesús y su acordeón;2013;Summer Party
-spotify:track:4TDcFkFdHnROhMYelS3x4G;Eres;Massiel;1981;Summer Party
-spotify:track:0mnAmQX1pciMncT2qFCNmK;SUBEME LA RADIO;Enrique Iglesias, Descemer Bueno, Zion & Lennox;2021;Summer Party
-spotify:track:2EBCVPNAG46nbgs6jXPGvv;Starships;Nicki Minaj;2012;Summer Party
-spotify:track:46LipN9xfr9481vw8gLNRs;Y Cuanto Mas Acelero;Javi Cantero;2001;Summer Party
-spotify:track:4bMZ60QNM6OEehI6b8RtS4;Matador - Remasterizado 2008;Los Fabulosos Cadillacs;2021;Summer Party
-spotify:track:4AA1JmBpy3Bx5ZLAnJxOto;Me Pongo Colorada;Papá Levante;2000;Summer Party
-spotify:track:5sMahG7wqFxJFXNaw1BPAf;Embrujada;Tino Casal;1983;Summer Party
-spotify:track:0KAiuUOrLTIkzkpfpn9jb9;Drive By;Train;2012;Summer Party
-spotify:track:5rgy6ghBq1eRApCkeUdJXf;We Are Young (feat. Janelle Monáe);fun., Janelle Monáe;2012;Summer Party
-spotify:track:39shmbIHICJ2Wxnk1fPSdz;Should I Stay or Should I Go - Remastered;The Clash;1982;Summer Party
-spotify:track:2PzU4IB8Dr6mxV3lHuaG34;(I Can't Get No) Satisfaction - Mono Version;The Rolling Stones;1965;Summer Party
-spotify:track:6p36K0yKWBWanXfwPuqg8z;Bailando sin salir de casa;Ole Ole;1986;Summer Party
-spotify:track:674PSQ93mhKBnjh9snOMRl;It's a Hap-Hap-Happy World;Ambrose & His Orchestra;2017;Summer Party
-spotify:track:50dFUtKtDS8BAaD7MVeEqI;La Canción del Verano;La La Love You;2021;Summer Party
-spotify:track:15tHagkk8z306XkyOHqiip;"I'll Be There for You - Theme From ""Friends""";The Rembrandts;1995;Summer Party
-spotify:track:34jtsFqKNRSJFa0r6ZRqQh;Last Night a D.J. Saved My Life;Indeep;2012;Summer Party
-spotify:track:3oQhgsBwOGaxr5dWKAim7Y;Vamos a la Playa;Righeira;2017;Summer Party
-spotify:track:714hERk9U1W8FMYkoC83CO;You Sexy Thing;Hot Chocolate;1975;Summer Party
-spotify:track:0aJrYfARfCKzv6gXjhs4SZ;Upside Down;Jack Johnson;2006;Summer Party
-spotify:track:7HgG6kaNPUltGHFP6aIS4L;Tu Vuo Fà L'Americano;Renato Carosone;1995;Summer Party
-spotify:track:2xcrseImDFEf8Urommws03;New Sensation;INXS;1987;Summer Party
-spotify:track:23E53f3C9SJ9MqBh1f6hEw;Juramento eterno de sal;Álvaro De Luna;2020;Summer Party
-spotify:track:0ntQJM78wzOLVeCUAW7Y45;Sex on Fire;Kings of Leon;2008;Summer Party
-spotify:track:144JMbvbR5txNzoZ112wo4;Strong Enough;Cher;1998;Summer Party
-spotify:track:2QOtabBloSf7iti6MndGIs;Eterno Verano;Miki Núñez, Adrià Salas, Arnau Griso, Nil Moliner;2019;Summer Party
-spotify:track:78DVpEWwmJFC25KGz8fJuE;Clavado en Un Bar;Maná;1997;Summer Party
-spotify:track:1zW2csx1vVJrKfvDrFQNVt;Jump in the Line;Harry Belafonte;1961;Summer Party
-spotify:track:2olVm1lHicpveMAo4AUDRB;The Power Of Love;Huey Lewis & The News;2006;Summer Party
-spotify:track:6uojMoKuVkIVEeqH4JCBAr;Alba;Antonio Flores;1994;Summer Party
-spotify:track:0sX3XmiVd8BAIh6kqiCk9Q;El rompeolas - Remaster 2017;Loquillo Y Los Trogloditas;1988;Summer Party
-spotify:track:1b0zk12cACPIYKV2cC0dNt;La Fiesta De Blas;Formula V;1974;Summer Party
-spotify:track:5CmVYFZinikaqh9Mf2J1Xl;La Ventanita;Sergio Vargas;1999;Summer Party
-spotify:track:6ZVz2iEPeySawsWC4pU8yh;Muchas Flores;Rosario;2001;Summer Party
-spotify:track:7qhuaYIafvH285FtQT71oQ;Al Amanecer;Los Fresones Rebeldes;1997;Summer Party
-spotify:track:6uzGmmQ4CuG9HvZktEy0LF;Qué Bonito Es Querer;Manuel Carrasco;2018;Summer Party
-spotify:track:3f43MHFXpOqMkdu9gxEaoq;Ya No Quiero Tu Querer;José El Francés;2000;Summer Party
-spotify:track:6DmfWj5kOa1fX8AwN9byOn;L.A. Woman;The Doors;1971;Summer Party
-spotify:track:3B5UbSndRz907IZhhmUfLi;Count on Me;Bruno Mars;2010;Summer Party
-spotify:track:4IHEOKSPSnPzjKxBktZ4J7;Pop Goes The World;Men Without Hats;1987;Summer Party
-spotify:track:7MKO7rUZzjw8p87zdZDgqa;Besos;El Canto Del Loco;2005;Summer Party
-spotify:track:5ZaTqcL7zIreaVNeVy89Iu;La Gota Fría;Carlos Vives;1993;Summer Party
-spotify:track:3v9xlH6BpmRbqL7hgNJhfT;I Get Around (Mono);The Beach Boys;1964;Summer Party
-spotify:track:42haGkGqdkjRMW4j0TC5Km;Reggae Night;Jimmy Cliff;1983;Summer Party
-spotify:track:6kQz6t5z1FK4uohPh8Kd73;Let's Get Loud;Jennifer Lopez;1999;Summer Party
-spotify:track:0imrhMFOWQ9XYDCnLfecYV;Don Diablo;Miguel Bosé;1980;Summer Party
-spotify:track:7vJz53OhSGMIxLlwhfwqzu;Leave a Light On;Belinda Carlisle;1989;Summer Party
-spotify:track:29SyMC0plk6qw8NMF7lfRL;You Really Got Me;The Kinks;1964;Summer Party
-spotify:track:4yQw7FR9lcvL6RHtegbJBh;Think;Aretha Franklin;1968;Summer Party
-spotify:track:1MB8kTH7VKvAMfL9SHgJmG;VAGABUNDO;Sebastian Yatra, Manuel Turizo, Beéle;2023;Summer Party
-spotify:track:3c7U2Kj8YL8BquVmEhybCR;Si por mi fuera;Beret;2019;Summer Party
-spotify:track:6FT83pFXKhDlXDsNJFAHWz;You Never Can Tell;Chuck Berry;1964;Summer Party
-spotify:track:20CozgjF6bshBw8cLhN23B;Nochentera;Vicco;2022;Summer Party
-spotify:track:6rLqjzGV5VMLDWEnuUqi8q;Dancing In The Street;Martha Reeves & The Vandellas;1965;Summer Party
-spotify:track:2SDx0PooHZI1SQKR0y44bs;Grace Kelly;MIKA;2006;Summer Party
-spotify:track:2z4U9d5OAA4YLNXoCgioxo;What the Hell;Avril Lavigne;2011;Summer Party
-spotify:track:3Vby4nGmtbDo7HDJamOWkT;Stuck In The Middle With You;Stealers Wheel;1972;Summer Party
-spotify:track:6dGnYIeXmHdcikdzNNDMm2;Here Comes The Sun - Remastered 2009;The Beatles;1969;Summer Party
-spotify:track:2BKy24o7zh4D0oIJmFysCW;Dale Vieja;El Combo Dominicano;2018;Summer Party
-spotify:track:4KOIPoWgg56YkP12E1aFoQ;Mari Carmen;La Pegatina;2011;Summer Party
-spotify:track:70YvYr2hGlS01bKRIho1HM;La Grange - 2005 Remaster;ZZ Top;1973;Summer Party
-spotify:track:4lhqb6JvbHId48OUJGwymk;Hey Brother;Avicii;2013;Summer Party
-spotify:track:3G7tRC24Uh09Hmp1KZ7LQ2;I'm a Believer - 2006 Remaster;The Monkees;1967;Summer Party
-spotify:track:6xepovPqjvrkEw9Y5AMmTm;Lambada - Original Version 1989;Kaoma;1989;Summer Party
-spotify:track:3UaQ7rPrZt60bUyegxsedg;Que El Ritmo No Pare;Patricia Manterola;2002;Summer Party
-spotify:track:4JfuiOWlWCkjP6OKurHjSn;Walk This Way;Aerosmith;1975;Summer Party
-spotify:track:0byd9zFQjdxxRdCNpPMFVk;Te Quiero Más;Fórmula Abierta;2002;Summer Party
-spotify:track:451CpDIPCEe6C33BFGL3Kh;Ven Devórame Otra Vez;Azucar Moreno;1990;Summer Party
-spotify:track:6r8k1vznHrzlEKYxL4dZEe;La Isla Bonita;Madonna;1986;Summer Party
-spotify:track:5kEf2tlCPICgdp7HzIpQD2;Summerlove;David Tavaré;2006;Summer Party
-spotify:track:03N0ZpS5QaC9ga9i2xO9Vp;Satellites;September;2005;Summer Party
-spotify:track:4SnU0W6LY2CD4iH5vb4kgQ;Voy en un coche;Christina y Los Subterraneos;1992;Summer Party
-spotify:track:6guf5rr036GUC94cF4725F;Atomic;Sleeper, Rapino Brothers;2016;Summer Party
-spotify:track:2pX4FpOgwItRVPPUFdRcxA;Smooth (feat. Rob Thomas);Santana, Rob Thomas;1999;Summer Party
-spotify:track:6MsqqWr7iNxIeAdaE1sC3Z;Grite Una Noche;Nacha Pop;1985;Summer Party
-spotify:track:6ebo7CQn4ILLGvXRmXHhQz;Miénteme;TINI, Maria Becerra;2023;Summer Party
-spotify:track:5UkoitnvaDUSsq7cVsOdOh;Be My Baby;Vanessa Paradis;1992;Summer Party
-spotify:track:6oyYKWTbYt5Zb8tIiLZbmH;Unchain My Heart;Joe Cocker;1987;Summer Party
-spotify:track:04cdEVbQPb8BJb7593e5fO;What a Wonderful World;Joey Ramone;2002;Summer Party
-spotify:track:65H6t1WQBim6q93yM8fEwn;Obsesion;Aventura, Judy Santos;2002;Summer Party
-spotify:track:1rWVL9jF4t5HK3e02bo0jA;Prohibida;Raul;2001;Summer Party
-spotify:track:2k6qpHJsrKCCyvsHv2cPqR;Diana;Paul Anka;1966;Summer Party
-spotify:track:2xqNBP7kAqeZi96QISEGx4;Antes Que Ver El Sol;Coti, Dani Martín;2003;Summer Party
-spotify:track:2oUBG6Te9PNzEJB17Cbmi3;El Muerto Vivo;Peret;1989;Summer Party
-spotify:track:3TlIt0ReIxPsVZcOEivT5U;It's Not Unusual;Tom Jones;1965;Summer Party
-spotify:track:26V1bLUk0SBYkLEwl4caPR;Clavaito;Chanel, Abraham Mateo;2023;Summer Party
-spotify:track:7kaFsQygyiCqRboWCXztxZ;Do It Like That;TOMORROW X TOGETHER, Jonas Brothers;2023;Summer Party
-spotify:track:1A8j067qyiNwQnZT0bzUpZ;This Girl (Kungs Vs. Cookin' On 3 Burners);Kungs, Cookin' On 3 Burners;2016;Summer Party
-spotify:track:0vxQz6Rdul1H7rtovvjFNQ;Verano del Amor;Sidonie;2020;Summer Party
-spotify:track:2X1P55Lrz0g5X2OQd8n4c9;María Caipirinha (with Dj Dero);Carlinhos Brown, DJ Dero;2011;Summer Party
-spotify:track:3x6Z690kwrwNJuApTiN2gK;Lola;Pastora;2003;Summer Party
-spotify:track:4MEA23StRB0TUaiVTPkbux;Verano Azul - Instrumental;Orquesta RTVE;2002;Summer Party
-spotify:track:0ZJgIjGJdYzgb03LSH09Gx;Amoureux solitaires;Lio;1980;Summer Party
-spotify:track:53tfEupEzQRtVFOeZvk7xq;DESPECHÁ;ROSALÍA;2022;Summer Party
-spotify:track:2Ma2f8jV8VKMJoAcnCvZ8h;Y Yo Sigo Aqui - Spanglish;Paulina Rubio;2000;Summer Party
-spotify:track:4V8uHuLaBRxQ02H4YNCOO7;Sopa de Caracol;Banda Blanca;1993;Summer Party
-spotify:track:0q3A8TufZEh6giFxSMUIsf;I Feel Love;Donna Summer;2014;Summer Party
-spotify:track:3mWpUEBYnv9SIFWfixSJFx;Can't Get Enough Of Your Love, Babe;Barry White;1974;Summer Party
-spotify:track:2AVkArcfALVk2X8sfPRzya;Summer Nights - From “Grease”;John Travolta, Olivia Newton-John;1978;Summer Party
-spotify:track:1BkY0N8ChFk2mdLbAUu8ZK;Pass The Dutchie;Musical Youth;1994;Summer Party
-spotify:track:78FJd3BMjDQCA1Hh2QfKqS;Voy a pasármelo bien;Hombres G;1989;Summer Party
-spotify:track:1uKjQoh8JZj9ryuYRhpd7E;Ahora Te Puedes Marchar;Luis Miguel;1987;Summer Party
-spotify:track:2YC3neZr19WGZ1FbBVd3Uc;Los Amigos de Mis Amigas Son Mis Amigos;Objetivo Birmania;1989;Summer Party
-spotify:track:7xphJeLAdf3LodIwGMtQAc;Goodbye Sam Hello Samantha;Cliff Richard;1977;Summer Party
-spotify:track:70Vdd1gx5tn84jkAU31ASv;Sexy And I Know It;LMFAO;2011;Summer Party
-spotify:track:6tXnRSvuNgOq4QcxpIN54r;Weather With You;Crowded House;1991;Summer Party
-spotify:track:1BwrMGGhPA6GarWIYaFrW8;La Vida Es Un Carnaval;Celia Cruz;2016;Summer Party
-spotify:track:5k5fWendNngd89O8JKoE8L;Better When I'm Dancin';Meghan Trainor;2015;Summer Party
-spotify:track:51RBDu31r3ynFswDJmidLW;Tacatà - Radio Edit;Tacabro, Romano, Sapienza, Ruly Rodriguez;2012;Summer Party
-spotify:track:1PrlCxehcEi0KvIwKzJuOl;Everybody's Free (To Feel Good);Rozalla;1991;Summer Party
-spotify:track:2owC2f9sCVSsd2GAKwAQar;Groenlandia;Zombies;1993;Summer Party
-spotify:track:0n4bITAu0Y0nigrz3MFJMb;Blurred Lines;Robin Thicke, T.I., Pharrell Williams;2013;Summer Party
-spotify:track:2Pzhx26KqgTTKnko0uC7F7;Stumblin' In - 2017 Remaster;Chris Norman, Suzi Quatro;1978;Summer Party
-spotify:track:4bEb3KE4mSKlTFjtWJQBqO;Don't Stop - 2004 Remaster;Fleetwood Mac;1977;Summer Party
-spotify:track:4EQOGfssbSpTlV6EZRtrSv;ULALA (OOH LA LA);Myke Towers, Daddy Yankee;2022;Summer Party
-spotify:track:0gzqZ9d1jIKo9psEIthwXe;Beautiful Day;U2;2000;Summer Party
-spotify:track:4n43gABaScqvSEiM8i0kkW;Devuelveme La Vida;Bustamante;2005;Summer Party
-spotify:track:1vvNmPOiUuyCbgWmtc6yfm;My Way;Calvin Harris;2016;Summer Party
-spotify:track:0XPayKZFFZA2PwSRNi1pVU;Terriblemente Cruel;Leiva;2014;Summer Party
-spotify:track:6aIOfv9A3FZtQjMjyWNiJJ;Levantando las Manos;El Simbolo;2005;Summer Party
-spotify:track:0SS7oaDTSlKFiPtzJ2oA26;La primavera;Delafé y las flores azules;2010;Summer Party
-spotify:track:7j56HrjR9cGzvekvZY3Faz;HandClap;Fitz and The Tantrums;2016;Summer Party
-spotify:track:0IUFjvwlh18TWiTi6kO5pP;Como un burro amarrado en la puerta del baile;El Último De La Fila;2014;Summer Party
-spotify:track:3f2k0XTc2ZXG17jEMDu8pp;Quiero tener tu presencia;Seguridad Social;1993;Summer Party
-spotify:track:0ByMNEPAPpOR5H69DVrTNy;Don't Stop The Music;Rihanna;2008;Summer Party
-spotify:track:02V2iJhKyNp1ZpvTPPZTHY;Soy lo Que Me Das;Chenoa;2004;Summer Party
-spotify:track:7zMUCLm1TN9o9JlLISztxO;Burning Love;Elvis Presley;1973;Summer Party
-spotify:track:5ZsIUgA0tvggY0ycOOUDR2;El Puente;Los Mismos;1996;Summer Party
-spotify:track:3NFixCH2aWtCNbZrJ3OdiB;Happy World;Blue 4 U;2022;Summer Party
-spotify:track:2SC4TS2QvUcKvXRFGgyyDc;Turn On, Tune In, Cop Out - Radio Edit;Freak Power;1994;Summer Party
-spotify:track:56J9sf5j7T8cPg1fOGmBRs;Si No Te Quisiera;Juan Magán, Belinda, Lapiz Conciente;2015;Summer Party
-spotify:track:6VUJQqyeQhAZHkQbSDqLtI;La Cintura;Alvaro Soler;2019;Summer Party
-spotify:track:3ZFTkvIE7kyPt6Nu3PEa7V;Hips Don't Lie (feat. Wyclef Jean);Shakira, Wyclef Jean;2005;Summer Party
-spotify:track:60nZcImufyMA1MKQY3dcCH;"Happy - From ""Despicable Me 2""";Pharrell Williams;2014;Summer Party
-spotify:track:04j67XNNVu1HI7JrIlMM3S;"Accidentally In Love - From ""Shrek 2"" Soundtrack";Counting Crows;2004;Summer Party
-spotify:track:1AODZVWUeYlsKoFTo2iyEA;Perdona (Ahora Sí Que Sí);Carolina Durante, Amaia;2018;Summer Party
-spotify:track:62LJFaYihsdVrrkgUOJC05;Kiss;Prince;1986;Summer Party
-spotify:track:6b6IMqP565TbtFFZg9iFf3;I Can't Help Myself (Sugar Pie, Honey Bunch);Four Tops;1965;Summer Party
-spotify:track:1JpZMDDAkfhnrO6nXIQZ2g;Noches de bohemia - Radio Edit;Navajita Platea;1998;Summer Party
-spotify:track:2Mz7HwloqFNdA6iZeZk5PJ;Djobi, Djoba;Gipsy Kings;1987;Summer Party
-spotify:track:39LLxExYz6ewLAcYrzQQyP;Levitating;Dua Lipa;2020;Summer Party
-spotify:track:2x3MxkdvKiWvLor7yNeLWB;All My Loving;Los Manolos;1991;Summer Party
-spotify:track:6inenm457lcRwlDN7GCPc4;Mediterraneo - Remasterizado;Los Rebeldes;1985;Summer Party
-spotify:track:79qPDRmHmJ5xcU7oyS8CQ1;Horny - '98 Radio Edit;Mousse T., Hot 'N' Juicy;2019;Summer Party
-spotify:track:3Z4ZuDrY684IFTBz2ze708;Gimme Some Lovin' - Single Mix;The Spencer Davis Group;1966;Summer Party
-spotify:track:3MjUtNVVq3C8Fn0MP3zhXa;...Baby One More Time;Britney Spears;1999;Summer Party
-spotify:track:5UmGJS0jd1r52OjnNvVHvU;La Bomba;King Africa;2009;Summer Party
-spotify:track:1DKyFVzIh1oa1fFnEmTkIl;Gloria (feat. Van Morrison) - Stereo Version;Them, Van Morrison;2015;Summer Party
-spotify:track:6EBDmMZBQkWrj7jWlGhFU1;Doctor Jones;Aqua;1997;Summer Party
-spotify:track:7nK3q1GgJDxlWfCwtiLV5a;A fuego lento;Rosana;1996;Summer Party
-spotify:track:3T07pNAEVr9adeIG9i1ex4;Color Esperanza;Diego Torres;2001;Summer Party
-spotify:track:7mDCg8XTEyDNPzC5Jdt7mu;Break Your Heart;Taio Cruz, Ludacris;2010;Summer Party
-spotify:track:228BxWXUYQPJrJYHDLOHkj;Gasolina;Daddy Yankee;2004;Summer Party
-spotify:track:57bgtoPSgt236HzfBOd8kj;Thunderstruck;AC/DC;1990;Summer Party
-spotify:track:6M8horg7h52MPTxY0I3dQJ;La Bilirrubina;Juan Luis Guerra 4.40;1990;Summer Party
-spotify:track:0Ph6L4l8dYUuXFmb71Ajnd;Livin' la Vida Loca;Ricky Martin;1999;Summer Party
-spotify:track:5OaqffbeQyVVqtnA71Ci7K;Por la Raja de Tu Falda;Estopa;1999;Summer Party
-spotify:track:7KkdYJqxvq4ZFq9gvFy06v;D.I.S.C.O. - Single Version;Ottawan;1980;Summer Party
-spotify:track:6eN1f9KNmiWEhpE2RhQqB5;Paradise City;Guns N' Roses;1987;Summer Party
-spotify:track:4cluDES4hQEUhmXj6TXkSo;What Makes You Beautiful;One Direction;2012;Summer Party
-spotify:track:6J3Cz3Ok2oI7sXebhGNKt3;Corazón Contento - Remasterizado;Marisol;1977;Summer Party
-spotify:track:4I3rLiNr4xgRT5dRpFOltS;Me quedaré solo;Amistades Peligrosas;1996;Summer Party
-spotify:track:1hbWtHgRDG25DkmxE4I28V;Puedes Contar Conmigo;La Oreja de Van Gogh;2003;Summer Party
-spotify:track:2oWMI54r0qT4N8Xb4C76vq;The Look;Roxette;1988;Summer Party
-spotify:track:4Y4Gd3ty8uut6Qw43c7yJc;(Sittin' On) the Dock of the Bay;Otis Redding;1968;Summer Party
-spotify:track:1IqFh00G2kvvMm8pRMpehA;Me and Bobby McGee;Janis Joplin;1971;Summer Party
-spotify:track:66VmioeXL4i1TCfHIO8R9t;Desde Que Estamos Juntos;Melendi;2016;Summer Party
-spotify:track:1JO1xLtVc8mWhIoE3YaCL0;Happy Together;The Turtles;1967;Summer Party
-spotify:track:684oh18gBA2WtbQ6nK0tEw;Desátame;Monica Naranjo;1994;Summer Party
-spotify:track:7vWFaMq63AwkFDhS2OAg5u;The Time (Dirty Bit);Black Eyed Peas;2010;Summer Party
-spotify:track:0GONea6G2XdnHWjNZd6zt3;Summer Of '69;Bryan Adams;1984;Summer Party
-spotify:track:0NZl2KE4mhtjondn0IwJYd;Bye Bye;David Civera;2003;Summer Party
-spotify:track:0Z9UkcT1pnrmLciUJPcMMS;Gold - 2003 Remaster;Spandau Ballet;1983;Summer Party
-spotify:track:0XxJX5RIwUkX37UIdGZu9C;Dramas y comedias;Fangoria;2013;Summer Party
-spotify:track:2vz1CsL5WBsbpBcwgboTAw;"Footloose - From ""Footloose"" Soundtrack";Kenny Loggins;1984;Summer Party
-spotify:track:0GjEhVFGZW8afUYGChu3Rr;Dancing Queen;ABBA;1976;Summer Party
-spotify:track:2PYJnUWEPPP8C6b79UiwIl;Ven Conmigo (Solamente Tú);Christina Aguilera;2000;Summer Party
-spotify:track:1jGnbIE9qWEn0Xi9MFRE74;Ya Llega el Verano;Bruno Lomas;2007;Summer Party
-spotify:track:06xLo8Oa53wmBMdWcIsqPL;Mucho mejor (feat. Coque Malla);Los Rodriguez, Coque Malla;1995;Summer Party
-spotify:track:2GYHyAoLWpkxLVa4oYTVko;Alors on danse - Radio Edit;Stromae;2010;Summer Party
-spotify:track:0qxYx4F3vm1AOnfux6dDxP;You Can Call Me Al;Paul Simon;1986;Summer Party
-spotify:track:4ppxWzgjvst4Mv1Kpwooeh;Búscate un hombre que te quiera;El Arrebato;2004;Summer Party
-spotify:track:4cnGvmgw4jRnd0rlVqE41b;¡Oh! Carol;Duo Dinamico;1987;Summer Party
-spotify:track:14iN3o8ptQ8cFVZTEmyQRV;I Kissed A Girl;Katy Perry;2008;Summer Party
-spotify:track:0yLdNVWF3Srea0uzk55zFn;Flowers;Miley Cyrus;2023;Summer Party
-spotify:track:6YTBfxkdGce9pLEy9jG9Jo;Mais Que Nada;Sergio Mendes & Brasil '66;1972;Summer Party
-spotify:track:352FuGmGJClPjojSYjNrXG;Já Sei Namorar - 2004 Digital Remaster;Tribalistas;2002;Summer Party
-spotify:track:0WK8NzEKfSZ9mqOlaBpdfm;Ritmo de la Noche (Classic Version);The Sacados;2018;Summer Party
-spotify:track:5TmFTHZp7HjBXjjsFvCY6h;Destination Calabria - Radio Edit;Alex Gaudino, Crystal Waters;2007;Summer Party
-spotify:track:6Mw8jsLM0z0iBjL5beg2nF;Adiós papá;Los Ronaldos;2007;Summer Party
-spotify:track:3yfki4r5cgFA784trLoHnk;Living In A Haze;Milky Chance;2023;Summer Party
-spotify:track:4hnNgPIIZsTE0F2cpfnL4a;Como Tú;Edurne, Efecto Pasillo;2022;Summer Party
-spotify:track:1gcESexgftSuLuML57Y69q;All Right Now;Free;1970;Summer Party
-spotify:track:5aIfLbdgkbH7NbQryd1poB;Samba de Janeiro;Bellini;1997;Summer Party
-spotify:track:4knc1Fp3kbuq8bH2byOvLu;Índigo;Camilo, Evaluna Montaner;2021;Summer Party
-spotify:track:1YJ4vpxPL6Wgo8gmRnvqSp;There Must Be an Angel (Playing With My Heart);Eurythmics, Annie Lennox, Dave Stewart;1991;Summer Party
-spotify:track:1mvZErZBp7WZT3HfGBykao;Cry for You;September;2007;Summer Party
-spotify:track:5MMnwYs0hIxkENRsbkWJ2G;Smoke On The Water - Remastered 2012;Deep Purple;1972;Summer Party
-spotify:track:1WN4uNclrDuczTO3bCr8s1;Be My Baby;The Ronettes;1964;Summer Party
-spotify:track:6e8Ou0wiqAzIpWb2eSxll8;Miami;Will Smith;1997;Summer Party
-spotify:track:7LrM28pPWCpJYmbnaxHBmu;Pokito a Poko;Chambao;2002;Summer Party
-spotify:track:2NX7IEg90aAZ4s3LK0Ebso;Oye El Boom;David Bisbal;2004;Summer Party
-spotify:track:4POgt5ayni68MeLqclubcC;Red Red Wine;UB40;1987;Summer Party
-spotify:track:3df4fSoW5zsdNi5Wf3K5RP;Tú No Eres Para Mi;Fanny Lu;2008;Summer Party
-spotify:track:4qbi9JDziBh3cxi9SFUbeu;Baila Morena (with Luny Tunes, Noriega) - Remix;Hector & Tito, Luny Tunes, Noriega;2005;Summer Party
-spotify:track:5aY2pfyGLxBpuI4TruqmQx;LAS 12;Ana Mena, Belinda;2023;Summer Party
-spotify:track:6MTd61g9zq6CB1FnJydjEb;Sugar Sugar;The Archies;1969;Summer Party
-spotify:track:2LawezPeJhN4AWuSB0GtAU;Have You Ever Seen The Rain;Creedence Clearwater Revival;1970;Summer Party
-spotify:track:1TtteYFQeZfSU8AmfIAOvu;Sun Is Up;INNA;2011;Summer Party
-spotify:track:05wIrZSwuaVWhcv5FfqeH0;Walking On Sunshine;Katrina & The Waves;1985;Summer Party
-spotify:track:6y4FVJwf09ssxuRnlEgXkp;Let's Stick Together;Bryan Ferry;1976;Summer Party
-spotify:track:0DcrhZ12WcCqruCs8ibXSf;I Can See Clearly Now - Edit;Johnny Nash;1972;Summer Party
-spotify:track:5OiU5DLjmMBF7ELAjIKxCZ;Maquillaje;Mecano;1988;Summer Party
-spotify:track:78His8pbKjbDQF7aX5asgv;Rivers of Babylon;Boney M.;1978;Summer Party
-spotify:track:2sgBTNHz9ckmqj3rx3ez4M;Ruby;Kaiser Chiefs;2007;Summer Party
-spotify:track:1INWPr855fwWdAOeecbu0W;Let's Twist Again;Chubby Checker;1961;Summer Party
-spotify:track:7Cuk8jsPPoNYQWXK9XRFvG;September;Earth\, Wind & Fire;2018;Summer Party
-spotify:track:5T8EDUDqKcs6OSOwEsfqG7;Don't Stop Me Now - Remastered 2011;Queen;1978;Summer Party
-spotify:track:4pNiE4LCVV74vfIBaUHm1b;Sir Duke;Stevie Wonder;1976;Summer Party
-spotify:track:4nrPB8O7Y7wsOCJdgXkthe;Shakira: Bzrp Music Sessions, Vol. 53;Bizarrap, Shakira;2023;Summer Party
-spotify:track:1ucAgkQ4EQDCSXQ2kEk99k;UNO;Little Big;2020;Summer Party
-spotify:track:3PR79C1jVvLLLmgdyHkXl3;That's the Way (I Like It) - 2004 Remaster;KC & The Sunshine Band;1975;Summer Party
-spotify:track:1rIKgCH4H52lrvDcz50hS8;Lush Life;Zara Larsson;2017;Summer Party
-spotify:track:0cGG2EouYCEEC3xfa0tDFV;Tainted Love;Soft Cell;1981;Summer Party
-spotify:track:7rSBUr661iFb9ndIJS0xUR;La quiero a morir;Muchachito Bombo Infierno;2010;Summer Party
-spotify:track:66y4liRr8Orq45N0I6VRAP;El Venao;Los Cantantes;1995;Summer Party
-spotify:track:4EFkvOhgAmlHEfDfvfSoh5;Girls on Film - 2010 Remaster;Duran Duran;1981;Summer Party
-spotify:track:1IHWl5LamUGEuP4ozKQSXZ;Tití Me Preguntó;Bad Bunny;2022;Summer Party
-spotify:track:6zSpb8dQRaw0M1dK8PBwQz;Cold Heart - PNAU Remix;Elton John, Dua Lipa, PNAU;2021;Summer Party
-spotify:track:6ylDpki1VpIsc525KC1ojF;Tacones Rojos;Sebastian Yatra;2022;Summer Party
-spotify:track:2EBCVPNAG46nbgs6jXPGvv;Starships;Nicki Minaj;2012;Summer Party
-spotify:track:18mmN3VrFWRi6SsSBJf6WJ;Pasos de cero;Pablo Alborán;2014;Summer Party
-spotify:track:0bfvHnWWOeU1U5XeKyVLbW;Can't Take My Eyes off You;Frankie Valli;1967;Summer Party
-spotify:track:7HTX5cE4qzHALfgO2xSvMd;Ayo Technology;Milow;2012;Summer Party
-spotify:track:0UOxp1BpnD8uPQMKU4wKjz;I Shot The Sheriff;Eric Clapton;1974;Summer Party
-spotify:track:5O4erNlJ74PIF6kGol1ZrC;Could You Be Loved;Bob Marley & The Wailers;1980;Summer Party
-spotify:track:1G5JaDf4CTkyoLRAO0pAYH;Summercat;Billie The Vision & The Dancers;2004;Summer Party
-spotify:track:6QGI6v91UlqSytTDVKZIUP;Ghostbusters;Ray Parker Jr.;1984;Summer Party
-spotify:track:4DoEHKWh8k6vYDleECQkJx;Los Tontos;C. Tangana, Kiko Veneno;2021;Summer Party
-spotify:track:0Z3xhSOhrawLV81YdiDiiJ;Venus;Shocking Blue;1969;Summer Party
-spotify:track:745H5CctFr12Mo7cqa1BMH;My Girl;The Temptations;1965;Summer Party
-spotify:track:46eu3SBuFCXWsPT39Yg3tJ;Don't Stop 'Til You Get Enough;Michael Jackson;1979;Summer Party
-spotify:track:4nXkbcTj3nyww1cHkw5RAP;Long Train Runnin';The Doobie Brothers;1973;Summer Party
-spotify:track:08CMK69OwVstuF3u5tNfM6;Vete - Remasterizado;Los Amaya;1977;Summer Party
-spotify:track:6mUQ6NW9WRcCuSsi4kzdlf;Un Rayo de Sol;Los Diablos;2013;Summer Party
-spotify:track:4VRP8DfxO2qQOZrnbaj324;Enamorate;Dvicio;2014;Summer Party
-spotify:track:0pQskrTITgmCMyr85tb9qq;Starman - 2012 Remaster;David Bowie;1972;Temacles
-spotify:track:5Hu3Y13dE9rEZire0tlAMW;Mi Gato;Rosario;2013;Temacles
-spotify:track:7iL6o9tox1zgHpKUfh9vuC;In Da Club;50 Cent;2003;Temacles
-spotify:track:0Ttqiz6DNvPkThvbnr9vYJ;Solo Si Es Contigo;Bombai, Bebe;2017;Temacles
-spotify:track:4qO03RMQm88DdpTJcxlglY;Call Me;Blondie;1999;Temacles
-spotify:track:2WfaOiMkCvy7F5fcp2zZ8L;Take on Me;a-ha;1985;Temacles
-spotify:track:3cfOd4CMv2snFaKAnMdnvK;All Star;Smash Mouth;1999;Temacles
-spotify:track:44Pv0rinObvVa4nQ4TXLga;Hello;Martin Solveig, Dragonette;2011;Temacles
-spotify:track:4nVBt6MZDDP6tRVdQTgxJg;Story of My Life;One Direction;2013;Temacles
-spotify:track:40riOy7x9W7GXjyGp4pjAv;Hotel California - 2013 Remaster;Eagles;1976;Temacles
-spotify:track:100Tm6z29RfHTdUQ6NIs0s;Me Voy;Julieta Venegas;2006;Temacles
-spotify:track:5WHTFyqSii0lmT9R21abT8;Don't Call Me Up;Mabel;2019;Temacles
-spotify:track:6vGW3d8X48CBaLdU0PQbey;Moving on Up;M People;1998;Temacles
-spotify:track:4Dvkj6JhhA12EX05fT7y2e;As It Was;Harry Styles;2022;Temacles
-spotify:track:4I3nztDQ3cPajQtzg59tWx;Don't Get Me Wrong;Pretenders;1987;Temacles
-spotify:track:2kZJ5wrpq1gCdHmVEjahoH;Pan y mantequilla;Efecto Pasillo;2013;Temacles
-spotify:track:0eVborSuxUeSg0meWYd9dZ;Soldadito marinero;Fito y Fitipaldis;2003;Temacles
-spotify:track:6J6RWKCPN5RFKHUKEUFjxS;Step by Step;New Kids On The Block;1990;Temacles
-spotify:track:3MrRksHupTVEQ7YbA0FsZK;The Final Countdown;Europe;1986;Temacles
-spotify:track:7GrAOZRMBhUPN5PdbJZVO9;Europe's Living A Celebration - Versión Gala Eurovisión;Rosa López;2006;Temacles
-spotify:track:4esOae7i4rqTbAu9o5Pxco;Girl on Fire;Alicia Keys;2012;Temacles
-spotify:track:5ildQOEKmJuWGl2vRkFdYc;DESPECHÁ;ROSALÍA;2022;Temacles
-spotify:track:7kzKAuUzOITUauHAhoMoxA;Last Nite;The Strokes;2001;Temacles
-spotify:track:6zIfdCmmhPCX0cMquBsC37;Sweet Dreams (Are Made of This);Eurythmics, Annie Lennox, Dave Stewart;2008;Temacles
-spotify:track:5BSclXJTa9B0iURhUjZo50;La Tortura (feat. Alejandro Sanz);Shakira, Alejandro Sanz;2005;Temacles
-spotify:track:4ePP9So5xRzspjLFVVbj90;Two Princes;Spin Doctors;1991;Temacles
-spotify:track:4ICTaUYLT26W3fsMpIX5cq;Rufino;Luz Casal;1985;Temacles
-spotify:track:29KiGwvYBw6JGQWrAlLhGg;Perfect;Fairground Attraction;1988;Temacles
-spotify:track:08RVzS1yTy1TsVuRgziTOq;Baila (Sexy Thing);Zucchero;2001;Temacles
-spotify:track:1mea3bSkSGXuIRvnydlB5b;Viva La Vida;Coldplay;2008;Temacles
-spotify:track:6RtPijgfPKROxEzTHNRiDp;Rude;MAGIC!;2014;Temacles
-spotify:track:5hnyJvgoWiQUYZttV4wXy6;Chasing Cars;Snow Patrol;2006;Temacles
-spotify:track:3ZpQiJ78LKINrW9SQTgbXd;All I Wanna Do;Sheryl Crow;1993;Temacles
-spotify:track:5N6M8yDiMV32T6Rkzh8EbW;Boom, Boom, Boom, Boom!!;Vengaboys;1999;Temacles
-spotify:track:7Eb5AYiiGWItBNddlmxvnh;A quién le importa;Alaska Y Dinarama;1986;Temacles
-spotify:track:0X1XgxtHG9hULAw296CCgz;El Gato Que Está Triste y Azul - Un Gato Nel Blu;Roberto Carlos;1992;Temacles
-spotify:track:7EI6Iki24tBHAMxtb4xQN2;Anywhere;Rita Ora;2017;Temacles
-spotify:track:1EZypwk0xcj64ZLAglhLs2;La Cosa Mas Bella;Eros Ramazzotti;1996;Temacles
-spotify:track:1EXrFPfVNVsyb32yapebbM;Our House;Madness;1982;Temacles
-spotify:track:7fu3Tv5rcoGD1PZV7s57WW;Rock the Boat;Hues Corporation;1973;Temacles
-spotify:track:5HCyWlXZPP0y6Gqq8TgA20;STAY (with Justin Bieber);The Kid LAROI, Justin Bieber;2021;Temacles
-spotify:track:0cqRj7pUJDkTCEsJkx8snD;Shake It Off;Taylor Swift;2014;Temacles
-spotify:track:7BCer0V0I1CZDI6S6kYD44;Son de Amores;Andy & Lucas;2001;Temacles
-spotify:track:4Egb5xP6cniUx0kgZd5zLB;Soy Yo;Bomba Estéreo;2015;Temacles
-spotify:track:3WJg6tafYPq7xVmLXVLI1b;Achilipú;Dolores Vargas;2015;Temacles
-spotify:track:3GfOAdcoc3X5GPiiXmpBjK;Song 2;Blur;2000;Temacles
-spotify:track:2bPH3Ph0RHQuugStXcpyRP;Cuando Tú Vas;Chenoa;2002;Temacles
-spotify:track:1FkoVC85Ds3mFoK0fVqEqP;Self Esteem;The Offspring;1994;Temacles
-spotify:track:1xQ6trAsedVPCdbtDAmk0c;Savage Love (Laxed - Siren Beat);Jawsh 685, Jason Derulo;2020;Temacles
-spotify:track:1gVVSmhWjci8l9Vrsl6HaS;Vertigo;U2;2004;Temacles
-spotify:track:2M9ro2krNb7nr7HSprkEgo;Fast Car;Tracy Chapman;1988;Temacles
-spotify:track:0GzQB5WXavUEU8tfTCAd8m;Cuando zarpa el amor;Camela;2004;Temacles
-spotify:track:623rRTKwGmgjH6sjE9uWLh;Scatman (ski-ba-bop-ba-dop-bop);Scatman John;1995;Temacles
-spotify:track:3U5JVgI2x4rDyHGObzJfNf;Unwritten;Natasha Bedingfield;2004;Temacles
-spotify:track:7EWKAYWmUc1cTfEimTKvou;Háblame de Ti;Pecos;1978;Temacles
-spotify:track:521uF3jhz9GIIlLeP9YV7J;Sleeping In My Car;Roxette;1994;Temacles
-spotify:track:5Ihd9HrPvOADyVoonH9ZjB;Un-Break My Heart;Toni Braxton;1996;Temacles
-spotify:track:1d5obgzCOtwq9qaxfe4Hpw;Rayos de Sol;José de Rico, Henry Mendez;2011;Temacles
-spotify:track:5ChkMS8OtdzJeqyybCc9R5;Billie Jean;Michael Jackson;2008;Temacles
-spotify:track:34js2TOQm9tf6xhefJ97HI;Oye;Gloria Estefan;1998;Temacles
-spotify:track:0COqiPhxzoWICwFCS4eZcp;Bring Me To Life;Evanescence;2003;Temacles
-spotify:track:5RC9olve1FVs1bnIneatm8;Free;Ultra Naté;1998;Temacles
-spotify:track:1ot6jEe4w4hYnsOPjd3xKQ;I'm So Excited;The Pointer Sisters;1982;Temacles
-spotify:track:6nTiIhLmQ3FWhvrGafw2zj;American Idiot;Green Day;2004;Temacles
-spotify:track:4Kii4OhkRIezu0KjOiFq0G;19 Dias y 500 Noches;Joaquín Sabina;1999;Temacles
-spotify:track:3u5N55tHf7hXATSQrjBh2q;Freed From Desire - prod. Molella, Phil Jay;Gala, Molella, Phil Jay;1997;Temacles
-spotify:track:3A58rEqzY7fwWSOnlB2AxB;Las Chicas Son Guerreras;COZ;2013;Temacles
-spotify:track:6ASzF6lnAamXQvWLPa3WDi;Suéltate el pelo;Hombres G;1988;Temacles
-spotify:track:3L7RtEcu1Hw3OXrpnthngx;Don't You Want Me;The Human League;1981;Temacles
-spotify:track:07q0QVgO56EorrSGHC48y3;I Was Made For Lovin' You;KISS;1979;Temacles
-spotify:track:2He3NOyqtLNE3RQPpeDdSb;Groove Is in the Heart;Deee-Lite;1990;Temacles
-spotify:track:2XVQdI3m0giGxNrwUhV3yP;Funkytown;Lipps Inc.;1979;Temacles
-spotify:track:0nHdPB5NA4xkoDoSLbREwD;Ma quale idea;Pino D'Angiò;2016;Temacles
-spotify:track:483Mpgv3ri4eUD5mJvHnaI;El Canario;No Me Pises Que Llevo Chanclas;1994;Temacles
-spotify:track:7pqTE8rWJUZ74M3rpDbLzP;Sola (Con un desconocido);Ole Ole;1987;Temacles
-spotify:track:6QBLmxP1tU6lw1dhKQulau;Mediterraneo;Los Rebeldes;1986;Temacles
-spotify:track:4u7ZqpIkq2sDdQD22JOFLZ;ABC;The Jackson 5;2022;Temacles
-spotify:track:37ZJ0p5Jm13JPevGcx4SkF;Livin' On A Prayer;Bon Jovi;1986;Temacles
-spotify:track:2rTYgHxgcndkUrRoU7x0Sv;Mr. Vain;Culture Beat;1993;Temacles
-spotify:track:1B75hgRqe7A4fwee3g3Wmu;U Can't Touch This;MC Hammer;1990;Temacles
-spotify:track:4p7XH4NhQ25iGYrrbg93gt;Suave;Luis Miguel;1993;Temacles
-spotify:track:5fwSHlTEWpluwOM0Sxnh5k;Pepas;Farruko;2021;Temacles
-spotify:track:1NCuYqMc8hKMb4cpNTcJbD;Another Day in Paradise - 2016 Remaster;Phil Collins;1989;Temacles
-spotify:track:0AQqrtK1pULuwZUXhwaaDz;All By Myself;Eric Carmen;1975;Temacles
-spotify:track:4WpmwEdc4RBos8W8icSSxW;Moonlight Shadow;Mike Oldfield;2009;Temacles
-spotify:track:1jF7IL57ayN4Ity3jQqGu0;Try;P!nk;2012;Temacles
-spotify:track:3Jwalo4hQy4AHqtnyGUoMk;Son Of My Father;Chicory Tip;2011;Temacles
-spotify:track:6epn3r7S14KUqlReYr77hA;Baby;Justin Bieber, Ludacris;2010;Temacles
-spotify:track:4HjzdN3HFW2p52Eey2MumB;El Baile del Gorila;Melody;2001;Temacles
-spotify:track:1Yk0cQdMLx5RzzFTYwmuld;Hello;Adele;2015;Temacles
-spotify:track:7iN1s7xHE4ifF5povM6A48;Let It Be - Remastered 2009;The Beatles;1970;Temacles
-spotify:track:6FG8TkQCTo5TfOQ6bG5Fxf;Se Me Enamora el Alma;Isabel Pantoja;2009;Temacles
-spotify:track:0LoQuiekvzqx7n8flgEKzF;Get It On;T. Rex;1971;Temacles
-spotify:track:4oGTdOClZUxcM2H3UmXlwL;Ironic;Alanis Morissette;1995;Temacles
-spotify:track:3Ti0O0JrzCJ3Hxdgg6YI1V;Fantastic Shine;Love of Lesbian;2013;Temacles
-spotify:track:7k4t7uLgtOxPwTpFmtJNTY;Tusa;KAROL G, Nicki Minaj;2019;Temacles
-spotify:track:3Q8avvsQE7mtTXT2TrDx3I;Sincericidio;Leiva;2016;Temacles
-spotify:track:20ZP3Om9DvDazXrNUC7WM2;These Days (feat. Jess Glynne, Macklemore & Dan Caplen);Rudimental, Jess Glynne, Macklemore, Dan Caplen;2019;Temacles
-spotify:track:22vgEDb5hykfaTwLuskFGD;Sucker;Jonas Brothers;2019;Temacles
-spotify:track:08bNPGLD8AhKpnnERrAc6G;FRIENDS;Marshmello, Anne-Marie;2018;Temacles
-spotify:track:2A2Q4CYBcVvBF2OqgJ3OWX;Ya No Quiero Ná;Lola Indigo;2018;Temacles
-spotify:track:4YYd1oPidpG7rVu4OLjPG7;Viaje con nosotros;Orquesta Mondragon;1980;Temacles
-spotify:track:0Dm43YLUlGdePpSbI1ct8h;Part-Time Lover;Stevie Wonder;1985;Temacles
-spotify:track:1n7omixiROWs5q6xpWiQuL;Satisfaction - Isak Original Extended;Benny Benassi, The Biz;2003;Temacles
-spotify:track:4bJygwUKrRgq1stlNXcgMg;All The Things She Said;t.A.T.u.;2002;Temacles
-spotify:track:2Za2mUwmQoSxWPscaY2vxl;Murder On The Dancefloor;Sophie Ellis-Bextor;2002;Temacles
-spotify:track:2yc9sElleYDl3NXMZSgsRv;Blanco y Negro;Malú;2010;Temacles
-spotify:track:6JV2JOEocMgcZxYSZelKcc;"CAN'T STOP THE FEELING! (from DreamWorks Animation's ""TROLLS"")";Justin Timberlake;2016;Temacles
-spotify:track:5zNlrLpJFZt3RvRe9A0Hed;Mi Religión;Nil Moliner;2020;Temacles
-spotify:track:583xVl0Sbj93uU4ceixgU8;I'm Outta Love - Radio Edit;Anastacia;1999;Temacles
-spotify:track:00i0O74dXdaKKdCrqHnfXm;La Mordidita (feat. Yotuel);Ricky Martin, Yotuel;2015;Temacles
-spotify:track:3PR79C1jVvLLLmgdyHkXl3;That's the Way (I Like It) - 2004 Remaster;KC & The Sunshine Band;1975;Temacles
-spotify:track:0ire4j2mcGovF5JA1D2cTp;Don't Leave Me This Way (with Sarah Jane Morris);The Communards, Sarah Jane Morris;1986;Temacles
-spotify:track:54X78diSLoUDI3joC2bjMz;Purple Rain;Prince;1984;Temacles
-spotify:track:1ckqbT2LtD2K1Mqvlmo21n;La vida pasa felizmente (remastered);Luis Aguile;2002;Temacles
-spotify:track:2iJuuzV8P9Yz0VSurttIV5;Scream & Shout;will.i.am, Britney Spears;2013;Temacles
-spotify:track:6AsF1pBjFMIEMXuA8JgRag;Dolce Vita;Ryan Paris;2009;Temacles
-spotify:track:1DxT6f6mH7kLriOUWbujup;All Night Long (All Night);Lionel Richie;1983;Temacles
-spotify:track:2GcjfckZexh9wRRjg9KtQG;Tiburon;Proyecto Uno;1997;Temacles
-spotify:track:3QiRtWfWlZtLz43VbJRiEm;Aire - Remastered;Pedro Marin;2015;Temacles
-spotify:track:3c8iiZGfEammKJuWTErE5x;Ain't Nobody (Loves Me Better) (feat. Jasmine Thompson);Felix Jaehn, Jasmine Thompson;2018;Temacles
-spotify:track:4pbyDPjFgfPqFTcIMC8xpK;Rock DJ;Robbie Williams;2000;Temacles
-spotify:track:0vg4WnUWvze6pBOJDTq99k;You're Beautiful;James Blunt;2005;Temacles
-spotify:track:4kLLWz7srcuLKA7Et40PQR;I Gotta Feeling;Black Eyed Peas;2009;Temacles
-spotify:track:54OR1VDpfkBuOY5zZjhZAY;YMCA - Original Version 1978;Village People;1978;Temacles
-spotify:track:7jK3BKP4SDY3MGHKgbGcp9;Juntos;Paloma San Basilio;1981;Temacles
-spotify:track:5rb9QrpfcKFHM1EUbSIurX;Yeah! (feat. Lil Jon & Ludacris);USHER, Lil Jon, Ludacris;2004;Temacles
-spotify:track:4cOdK2wGLETKBW3PvgPWqT;Never Gonna Give You Up;Rick Astley;1987;Temacles
-spotify:track:3qD3IT0t8QnkD80DEYvRgr;Greased Lightnin';John Travolta;2008;Temacles
-spotify:track:3I4rCM3LCLIFCNA0iRQ9Qz;Bimbó 92;Georgie Dann;2000;Temacles
-spotify:track:6b61wUfgkYnP1pmXI6k13J;Duro De Pelar;Rebeca;1996;Temacles
-spotify:track:6zT8SxeBSGZlMgQM8VvgYZ;Enseñame a Cantar;Micky;2003;Temacles
-spotify:track:6vXpvdynJIA38p4ffg9buA;Una Noche Más;Jennifer Lopez;1999;Temacles
-spotify:track:5xEM5hIgJ1jjgcEBfpkt2F;Complicated;Avril Lavigne;2002;Temacles
-spotify:track:7bJSbd2Upa4iYVHlbRKEJm;Enola Gay;Orchestral Manoeuvres In The Dark;1988;Temacles
-spotify:track:5a76ewdxMy4WoMuDinapcl;Que La Detengan;David Civera;2002;Temacles
-spotify:track:3tjFYV6RSFtuktYl3ZtYcq;Mood (feat. iann dior);24kGoldn, iann dior;2020;Temacles
-spotify:track:0BxfFnk0YzONqvmrkO0QrB;Don't Cha;The Pussycat Dolls, Busta Rhymes;2005;Temacles
-spotify:track:7mmhMfqs3knRMMlvnMPTHn;Simply Irresistible;Robert Palmer;1988;Temacles
-spotify:track:0reKGVcWLVvl1FzjZ6TACy;I Like The Way - Radio Edit;Bodyrockers;2005;Temacles
-spotify:track:020Gj87SqDRvzGHELzcCEc;Cien gaviotas;Duncan Dhu;1986;Temacles
-spotify:track:2tTmW7RDtMQtBk7m2rYeSw;Quevedo: Bzrp Music Sessions, Vol. 52;Bizarrap, Quevedo;2022;Temacles
-spotify:track:7wZUrN8oemZfsEd1CGkbXE;Bleeding Love;Leona Lewis;2007;Temacles
-spotify:track:2AY1UAimvTqjJC8vDJsOyy;Mayores;Becky G, Bad Bunny;2019;Temacles
-spotify:track:10tzk7ZRjwnLKd3gjKLtTA;Laura no està;Nek;1997;Temacles
-spotify:track:1EhDeCHd34jt7dMDqkGQBC;Arrasando;Thalia;2000;Temacles
-spotify:track:1SssFw74DdHVjRa6ADggdD;Sweat (A La La La La Long);Inner Circle;2010;Temacles
-spotify:track:4xzcXQrlMKwvv3kDpvBKWm;La Bilirrubina;Juan Luis Guerra 4.40;1990;Temacles
-spotify:track:4yu6Gh2sTy26PqVtLRmGOn;Asi Me Gusta a Mi;Chimo Bayo;2007;Temacles
-spotify:track:6PfQB3xEbIlky1dXOb3Yyh;Amigos para Siempre;Los Manolos;1992;Temacles
-spotify:track:4z2EeFUp5Lhai9qhHtA6IF;Salir;Extremoduro;1998;Temacles
-spotify:track:3850dYVgOFIXJh5U4BFEWH;Hung Up;Madonna;2005;Temacles
-spotify:track:15BQ7vEDv2LJuh8TxWIhtd;The Passenger;Iggy Pop;1977;Temacles
-spotify:track:4XcNoJ4W4Qa4uuqxa2KRsm;The Only Thing That Looks Good On Me Is You;Bryan Adams;1996;Temacles
-spotify:track:5YbgcwHjQhdT1BYQ4rxWlD;Don't Worry Be Happy;Bobby McFerrin;1997;Temacles
-spotify:track:2TxCwUlqaOH3TIyJqGgR91;Mamma Mia;ABBA;1975;Temacles
-spotify:track:7JJmb5XwzOO8jgpou264Ml;There's Nothing Holdin' Me Back;Shawn Mendes;2017;Temacles
-spotify:track:1yoMvmasuxZfqHEipJhRbp;Hawái;Maluma;2020;Temacles
-spotify:track:3i6qNxyVgIdUZTTi5m25EM;Bitch;Meredith Brooks;1997;Temacles
-spotify:track:5QO79kh1waicV47BqGRL3g;Save Your Tears;The Weeknd;2020;Temacles
-spotify:track:1uI848raFaNWwe9HjHpjQ5;Boys - Summertime Love;Sabrina;1988;Temacles
-spotify:track:2hConpLOB6gmyM8vDkVOof;Lobo-hombre en París;La Unión;1984;Temacles
-spotify:track:4y1LsJpmMti1PfRQV9AWWe;Girls Just Want to Have Fun;Cyndi Lauper;1983;Temacles
-spotify:track:2d8D7uk3tbAThjRkdfrx9c;Voyage voyage;Desireless;2001;Temacles
-spotify:track:5jVJAojK3LFKETjI2gYb8O;I Promised Myself;Nick Kamen;1990;Temacles
-spotify:track:0qPFZh2doqpRirH6JwqiFS;Johnny Techno Ska - Versión 1994 Remasterizada;Paco Pil;1994;Temacles
-spotify:track:5iwz1NiezX7WWjnCgY5TH4;Calma - Remix;Pedro Capó, Farruko;2018;Temacles
-spotify:track:5rgy6ghBq1eRApCkeUdJXf;We Are Young (feat. Janelle Monáe);fun., Janelle Monáe;2012;Temacles
-spotify:track:3QncI2MDoSto39bT8SJtKK;Antes Muerta Que Sencilla;María Isabel;2004;Temacles
-spotify:track:1SShxVVBeZBCY7WddnksPz;Gypsy Woman (She's Homeless) (La Da Dee La Da Da) - Basement Boy Strip To The Bone Mix;Crystal Waters, The Basement Boys;1991;Temacles
-spotify:track:4vfzROmNsxedKICcHod5Rh;Here Comes the Hotstepper;iNi Kamoze;2001;Temacles
-spotify:track:3FdHgoJbH3DXNtGLh56pFu;Conga!;Miami Sound Machine;1985;Temacles
-spotify:track:4a9hKPzMzh0vkKOUnz5gSD;Ella Elle L A;Kate Ryan;2008;Temacles
-spotify:track:5fy4vfEtv6lzqLx2Mt7stF;It's a Sin - 2018 Remaster;Pet Shop Boys;1987;Temacles
-spotify:track:22D8T98R2LL6PEC0LGrmYt;Let Me Out;Dover;2006;Temacles
-spotify:track:2hrUO4drrO63i7FYbCLBl2;Rockabye (feat. Sean Paul & Anne-Marie);Clean Bandit, Sean Paul, Anne-Marie;2018;Temacles
-spotify:track:4rFCPjKfgbEeNvs1Ku4nbd;Yo Quiero Bailar;Sonia Y Selena;2001;Temacles
-spotify:track:1hGy2eLcmC8eKx7qr1tOqx;Beautiful Girls;Sean Kingston;2007;Temacles
-spotify:track:2ev0McFPUBFiQ8CAXL2Okw;Saturday Night - Radio Mix;Whigfield;2022;Temacles
-spotify:track:2wlptOJ1g5fvLdu6ruKCKU;Madre Tierra (Oye);Chayanne;2014;Temacles
-spotify:track:11rsK9GDZ9UdWsxtDqnMmN;¿Porqué te vas?;Jeanette;2011;Temacles
-spotify:track:1zi7xx7UVEFkmKfv06H8x0;One Dance;Drake, Wizkid, Kyla;2016;Temacles
-spotify:track:5TMLavqGRKNxgzMBrVpC9R;Mon Amour - Remix;zzoilo, Aitana;2021;Temacles
-spotify:track:2ixsaeFioXJmMgkkbd4uj1;Budapest;George Ezra;2014;Temacles
-spotify:track:1EBYkBMIU9nWRCLsot4DN2;Lo echamos a suertes;Ella Baila Sola;1996;Temacles
-spotify:track:12FI23F59xB0DOoZcVKf4J;Bienvenidos;Miguel Ríos;1992;Temacles
-spotify:track:32MzNj36hpZLKIvdo80hOO;Agapimu;Ana Belén;1979;Temacles
-spotify:track:0lIoY4ZQsdn5QzhraM9o9u;Because the Night;Patti Smith;1978;Temacles
-spotify:track:6L89mwZXSOwYl76YXfX13s;Basket Case;Green Day;1994;Temacles
-spotify:track:4XHNR6VSE2JLNd65kNkX2L;Ai Se Eu Te Pego;Michel Teló;2015;Temacles
-spotify:track:1fDsrQ23eTAVFElUMaf38X;American Pie;Don McLean;1971;Temacles
-spotify:track:3E7ZwUMJFqpsDOJzEkBrQ7;Can't Get You out of My Head;Kylie Minogue;2001;Temacles
-spotify:track:59BkBWQitTPgS1inzGfyI5;Stars On 45 - Original Single Edit;Stars On 45;1981;Temacles
-spotify:track:0nrRP2bk19rLc0orkWPQk2;Wake Me Up;Avicii;2013;Temacles
-spotify:track:2fTsFCKRFQ5M0igJgabnLA;Price Tag;Jessie J, B.o.B;2011;Temacles
-spotify:track:4W4wYHtsrgDiivRASVOINL;Love Shack;The B-52's;1989;Temacles
-spotify:track:70LcF31zb1H0PyJoS1Sx1r;Creep;Radiohead;1993;Temacles
-spotify:track:2YdX7PEziOImkySNDWsaKM;Rise Up - Radio Edit;Yves Larock;2015;Temacles
-spotify:track:22HYEJveCvykVDHDiEEmjZ;Tubthumping;Chumbawamba;1997;Temacles
-spotify:track:4pt5fDVTg5GhEvEtlz9dKk;I WANNA BE YOUR SLAVE;Måneskin;2021;Temacles
-spotify:track:4r8lRYnoOGdEi6YyI5OC1o;Bye Bye Bye;*NSYNC;2000;Temacles
-spotify:track:3dPQuX8Gs42Y7b454ybpMR;Seven Nation Army;The White Stripes;2003;Temacles
-spotify:track:2WElktskrNJEwgpp5Vouxk;I'm Too Sexy;Right Said Fred;1992;Temacles
-spotify:track:6WrnSlcN0dzTO80mVVbBto;Do You Want To;Franz Ferdinand;2005;Temacles
-spotify:track:6vcdzohhBSbNdsZBh5IRpQ;Back for Good - Radio Mix;Take That;1995;Temacles
-spotify:track:5DiXcVovI0FcY2s0icWWUu;Mr. Jones;Counting Crows;1993;Temacles
-spotify:track:1PckUlxKqWQs3RlWXVBLw3;About Damn Time;Lizzo;2022;Temacles
-spotify:track:2zMJN9JvDlvGP4jB03l1Bz;Hot Stuff;Donna Summer;1979;Temacles
-spotify:track:7hhclvecTpNxNNRCk7NUoc;Little L;Jamiroquai;2001;Temacles
-spotify:track:3Z2tPWiNiIpg8UMMoowHIk;We Are The World;U.S.A. For Africa;1985;Temacles
-spotify:track:3TZiiTNmVhLRMhPksHqk8M;Nunca volverá;El Sueño de Morfeo;2005;Temacles
-spotify:track:0ikz6tENMONtK6qGkOrU3c;Wake Me Up Before You Go-Go;Wham!;1984;Temacles
-spotify:track:5R9a4t5t5O0IsznsrKPVro;Single Ladies (Put a Ring on It);Beyoncé;2008;Temacles
-spotify:track:0HPD5WQqrq7wPWR7P7Dw1i;TiK ToK;Kesha;2010;Temacles
-spotify:track:3NWoyVfSCtJ7CSFQ7rVu05;Ni Mas Ni Menos;Los Chichos;2007;Temacles
-spotify:track:000u1dTg7y1XCDXi80hbBX;I Don't Want A Lover;Texas;1989;Temacles
-spotify:track:4Fvnz1ZJ86IdqDAepWYPAh;Volver, Volver;Vicente Fernández;1972;Temacles
-spotify:track:21qnJAMtzC6S5SESuqQLEK;Pump Up The Jam;Technotronic;1989;Temacles
-spotify:track:1di1BEgJYzPvXUuinsYJGP;Everybody (Backstreet's Back) - Radio Edit;Backstreet Boys;1997;Temacles
-spotify:track:7a53HqqArd4b9NF4XAmlbI;Kings & Queens;Ava Max;2020;Temacles
-spotify:track:6N7gPTru90HYLRUIVDQ185;More Than This;Roxy Music;1982;Temacles
-spotify:track:5ubvP9oKmxLUVq506fgLhk;Stayin Alive;Bee Gees;2020;Temacles
-spotify:track:0lnxrQAd9ZxbhBBe7d8FO8;MMMBop;Hanson;1997;Temacles
-spotify:track:7wUKRQMHG0fI3DBzi6Tp29;Baila el Chiki Chiki;Rodolfo Chikilicuatre, Tata Golosa;2017;Temacles
-spotify:track:6lV2MSQmRIkycDScNtrBXO;Airplanes (feat. Hayley Williams of Paramore);B.o.B, Hayley Williams;2010;Temacles
-spotify:track:748mdHapucXQri7IAO8yFK;Kiss Me More (feat. SZA);Doja Cat, SZA;2021;Temacles
-spotify:track:1mJYIA1fwPgw40Kp9KIouE;No Rompas Mi Corazón;Coyote Dax;2001;Temacles
-spotify:track:0dIj0bpkfkKpcYYa5ehaRS;Historias de amor;OBK;1991;Temacles
-spotify:track:64X1Hzn8aqjFpiVfWjCGsp;Borriquito;Peret;1990;Temacles
-spotify:track:4wJNcICQAv1ZNj8tkoMJab;Yo no soy esa;Mari Trini;1971;Temacles
-spotify:track:6YUTL4dYpB9xZO5qExPf05;Summer;Calvin Harris;2014;Temacles
-spotify:track:49X0LAl6faAusYq02PRAY6;Lady - Hear Me Tonight;Modjo;2001;Temacles
-spotify:track:1sTsuZTdANkiFd7T34H3nb;Human;The Killers;2008;Temacles
-spotify:track:7vu0JkJh0ldukEYbTVcqd0;Issues;Julia Michaels;2017;Temacles
-spotify:track:294ii3rwz6bTJ2XMn5BDu0;Sugar Baby Love;The Rubettes;1990;Temacles
-spotify:track:7J0niAY0FLzGiCVJUREl88;Escuela de Calor;Radio Futura;1984;Temacles
-spotify:track:1Je1IMUlBXcx1Fz0WE7oPT;Wannabe;Spice Girls;1996;Temacles
-spotify:track:1q9l6c8bAzqWcvO3DM6FsR;I Don't Feel Like Dancin';Scissor Sisters;2006;Temacles
-spotify:track:2X1P55Lrz0g5X2OQd8n4c9;María Caipirinha (with Dj Dero);Carlinhos Brown, DJ Dero;2011;Temacles
-spotify:track:59eAcAyhYSLi5GKFrgHJzG;Faith;George Michael;1998;Temacles
-spotify:track:2yAVzRiEQooPEJ9SYx11L3;Blue (Da Ba Dee) - Gabry Ponte Ice Pop Radio;Eiffel 65, Gabry Ponte;1999;Temacles
-spotify:track:0weAUscowxeqDtpCgtbpgp;Gettin' Jiggy Wit It;Will Smith;1997;Temacles
-spotify:track:4V4P2sg9GaTttNn3mRnTDB;Nada Que Perder;Conchita;2007;Temacles
-spotify:track:1GcVa4jFySlun4jLSuMhiq;Angie - Remastered 2009;The Rolling Stones;1973;Temacles
-spotify:track:6sHBvzRsuGunQTfCk18KXi;Bailando por Ahi;Juan Magán;2012;Temacles
-spotify:track:5QDLhrAOJJdNAmCTJ8xMyW;Dynamite;BTS;2020;Temacles
-spotify:track:3xec1BelrzOd6v0o8HRd2l;El Jardín Prohibido;Sandro Giacobbe;2016;Temacles
-spotify:track:4nTduFjaTmGysc9WKNuCcs;Vida de Rico;Camilo;2021;Temacles
-spotify:track:0NJC0FDCODpPUntRTTQq97;Cryin';Aerosmith;1993;Temacles
-spotify:track:2BTSWfjaTMYWCxhmVRhqLK;Mr. Saxobeat;Alexandra Stan;2016;Temacles
-spotify:track:3P3pw6C19j31Rnzgo3JG7o;Perfect Strangers;Jonas Blue, JP Cooper;2018;Temacles
-spotify:track:3rdAz1fbUfZxYgaCviYhRo;Todo De Ti;Rauw Alejandro;2021;Temacles
-spotify:track:4KcH1ZRV2W1q7Flq0QqC76;Blitzkrieg Bop - 2016 Remaster;Ramones;1976;Temacles
-spotify:track:2HHtWyy5CgaQbC7XSoOb0e;Eye of the Tiger;Survivor;1982;Temacles
-spotify:track:4rvT5iZVOCJeXZrDvy6JFK;What Can I Do;The Corrs, Tin Tin Out;1998;Temacles
-spotify:track:4LD5dhQ3kqpqe14sGPDtBC;Scream;Michael Jackson, Janet Jackson;1995;Temacles
-spotify:track:3TCauNPqFiniaYHBvEVoHG;Beautiful;Christina Aguilera;2002;Temacles
-spotify:track:0puf9yIluy9W0vpMEUoAnN;Bang Bang;Jessie J, Ariana Grande, Nicki Minaj;2014;Temacles
-spotify:track:5vdp5UmvTsnMEMESIF2Ym7;Another One Bites The Dust - Remastered 2011;Queen;1980;Temacles
-spotify:track:4VnzKUBMB6cvog8Jvv1few;Yellow River;Christie;1970;Temacles
-spotify:track:1vxw6aYJls2oq3gW0DujAo;Crazy;Gnarls Barkley;2006;Temacles
-spotify:track:5Hyr47BBGpvOfcykSCcaw9;"Holding Out for a Hero - From ""Footloose"" Soundtrack";Bonnie Tyler;1986;Temacles
-spotify:track:3UmaczJpikHgJFyBTAJVoz;Stan;Eminem, Dido;2000;Temacles
-spotify:track:37dYAkMa4lzRCH6kDbMT1L;We No Speak Americano (Edit);Yolanda Be Cool, DCup;2020;Temacles
-spotify:track:4wDk9P2WSvHOsRW6SDYE7L;Que Te Quería;La Quinta Estacion;2009;Temacles
-spotify:track:1KGi9sZVMeszgZOWivFpxs;No Scrubs;TLC;1999;Temacles
-spotify:track:5hyq5k3Do9gW3HGvDg5ZEJ;La Lola;Café Quijano;1999;Temacles
-spotify:track:5RzFJd6W40SDTyZkX6xx45;I Know You Want Me (Calle Ocho);Pitbull;2009;Temacles
-spotify:track:0qi4b1l0eT3jpzeNHeFXDT;Just Can't Get Enough;Depeche Mode;1981;Temacles
-spotify:track:0SiywuOBRcynK0uKGWdCnn;Bad Romance;Lady Gaga;2009;Temacles
-spotify:track:4VrWlk8IQxevMvERoX08iC;Chandelier;Sia;2014;Temacles
-spotify:track:0ny5zITdmyNwyTPVzRGscU;What You Waiting For?;Gwen Stefani;2004;Temacles
-spotify:track:7uou7DWqEQSNfxcfipxyIu;Cuéntame un cuento;Celtas Cortos;1991;Temacles
-spotify:track:4z7maGZkAonDlXlwo8q69f;Da Ya Think I'm Sexy?;Rod Stewart;1978;Temacles
-spotify:track:6YYmoV9YbBefsspGmqFHbs;Una Vaina Loca;Fuego;2011;Temacles
-spotify:track:3zHq9ouUJQFQRf3cm1rRLu;"Love Me Like You Do - From ""Fifty Shades Of Grey""";Ellie Goulding;2015;Temacles
-spotify:track:0xmjwnQ3FNE6HuWCt2nHdZ;Where Is The Love?;Black Eyed Peas;2003;Temacles
-spotify:track:5g6nzsOxwxdoj6sqAl0NXB;It's Raining Men;The Weather Girls;1996;Temacles
-spotify:track:6uJrLZzBxS4JewGnihjNzM;The Rockafeller Skank;Fatboy Slim;1998;Temacles
-spotify:track:2CEgGE6aESpnmtfiZwYlbV;Dynamite;Taio Cruz;2010;Temacles
-spotify:track:4V9BTST4BSkvOL4xIQNHuS;Heaven Is A Place On Earth;Belinda Carlisle;1987;Temacles
-spotify:track:7kXmJwrZGIhDaLT9sNo3ut;Hey Boy Hey Girl;The Chemical Brothers;1999;Temacles
-spotify:track:6ocbgoVGwYJhOv1GgI9NsF;7 rings;Ariana Grande;2019;Temacles
-spotify:track:6pMHMzwTsWIxLigr54GGVm;Rock Your Baby;George McCrae;2010;Temacles
-spotify:track:38GqIQ4RVkat91RnQrLJYP;Love Is In The Air;John Paul Young;1989;Temacles
-spotify:track:5LGqFIVBf3ZUeFBpc87CFS;Life;Des'ree;1998;Temacles
-spotify:track:4S6gJt4RYR34t4sjW8wEah;Lo siento;Beret;2018;Temacles
-spotify:track:3bC1ahPIYt1btJzSSEyyrF;Whistle;Flo Rida;2012;Temacles
-spotify:track:5vCgDt0CtheaWVKzMW5KkO;Cero;Dani Martín;2013;Temacles
-spotify:track:06KyNuuMOX1ROXRhj787tj;We Don't Talk Anymore (feat. Selena Gomez);Charlie Puth, Selena Gomez;2016;Temacles
-spotify:track:4S1VYqwfkLit9mKVY3MXoo;Forever Young;Alphaville;1984;Temacles
-spotify:track:0nQLxiNGbbUoSGrxksETLm;The Power;SNAP!;1990;Temacles
-spotify:track:7kSclohbIAwXvlN0wU1wks;Locomia;Locomia;2016;Temacles
-spotify:track:0TDLuuLlV54CkRRUOahJb4;Titanium (feat. Sia);David Guetta, Sia;2012;Temacles
-spotify:track:6JymsaWDHk2Yj4e0yNBIFH;Jump Around;House Of Pain;1992;Temacles
-spotify:track:5Qjx4obghhfhsh6DiUwpNM;Mayonesa;Chocolate;2000;Temacles
-spotify:track:1EC0JRoSi9YL5zExd3Euc3;No Puedo Vivir Sin Ti;Los Ronaldos;2007;Temacles
-spotify:track:5X9yP4oSAHO8gdN5Zom5of;America America;Nino Bravo;2005;Temacles
-spotify:track:5BY0p2EH4EznNZ0MFD9mjt;Me Enamora;Juanes;2007;Temacles
-spotify:track:0gBfLS4aqbrr1ZvVv8dqWB;Stereo Love;Edward Maya, Vika Jigulina;2009;Temacles
-spotify:track:7HW5WIw7ZgZORCzUxv5gW5;Don't Go Breaking My Heart;Elton John, Kiki Dee;1975;Temacles
-spotify:track:49FYlytm3dAAraYgpoJZux;Umbrella;Rihanna, JAY-Z;2008;Temacles
-spotify:track:31AOj9sFz2gM0O3hMARRBx;Losing My Religion;R.E.M.;1991;Temacles
-spotify:track:1gkBsKxTpVHIn1nLf05CUo;Peter Pan;El Canto Del Loco;2008;Temacles
-spotify:track:6QgjcU0zLnzq5OrUoSZ3OK;Feel It Still;Portugal. The Man;2017;Temacles
-spotify:track:41nv6To7wnoVnFJSb1FF36;Escapar (Slipping Away) (feat. Amaral) - 2006 Remastered Version;Moby, Amaral;2006;Temacles
-spotify:track:0pqnGHJpmpxLKifKRmU6WP;Believer;Imagine Dragons;2017;Temacles
-spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson, Bruno Mars;2015;Temacles
-`;
-
+        // Aquesta variable es manté buida però es conserva per si es volgués afegir
+        // un contingut per defecte en el futur.
+        const csvData = ``;
+        
+        // --- Constants per a la càrrega remota (ACTUALITZADES PER APUNTAR A LA CARPETA 'dades') ---
+        // URL base de GitHub Pages per obtenir el contingut del fitxer
+        const REMOTE_BASE_URL = 'https://xaviuab.github.io/Hitster_Digital/dades/';
+        // URL de l'API de GitHub per descobrir els fitxers
+        const GITHUB_API_URL = "https://api.github.com/repos/xaviuab/Hitster_Digital/contents/dades";
+        
         // --- Estat de l'aplicació ---
         let errorTimeout;
         let allTracksFromFile = [];
@@ -1035,14 +208,66 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
         let categoriesLocked = false;
         let selectedCategoriesOnLoad = [];
         let totalTracksCountByCategory = {}; // Emmagatzema el total de cançons per categoria
-        let spotifyAccountType = null; // Nou estat: 'free' o 'premium'
+        let spotifyAccountType = null; // 'free' o 'premium'
+        let isSimulatedLandscape = false;
+
+
+        /** * Funció unificada per parsejar el contingut CSV. 
+         * Retorna un array d'objectes de pista.
+         * @param {string} fileContent - Contingut brut del fitxer CSV.
+         * @param {string} categoryName - Nom de la categoria a utilitzar si no hi ha 5a columna.
+         */
+        function parseCsvContent(fileContent, categoryName) {
+            const tracks = [];
+            const lines = fileContent.trim().split('\n');
+            
+            if (lines.length <= 1) return tracks;
+
+            const delimiter = ';'; 
+            // Salta la primera línia si sembla una capçalera vàlida
+            const startLine = (lines[0].split(delimiter).length >= 4 && lines[0].toLowerCase().includes('spotify')) ? 1 : 0;
+
+            for (let i = startLine; i < lines.length; i++) { 
+                const line = lines[i].trim();
+                if (!line) continue; 
+
+                const parts = line.split(delimiter);
+                
+                const cleanedParts = parts.map(part => part.trim().replace(/^"|"$/g, ''));
+
+                // Esperem 4 columnes mínim: URI, Títol, Artista, Any
+                if (cleanedParts.length >= 4) {
+                    const uri = cleanedParts[0]; 	
+                    const title = cleanedParts[1]; 	
+                    const artist = cleanedParts[2]; 	
+                    const yearData = cleanedParts[3]; 
+
+                    // Lògica per extreure els 4 dígits consecutius (l'any)
+                    const yearMatch = yearData.match(/\d{4}/);
+                    const year = yearMatch ? yearMatch[0] : 'N/A';
+                    
+                    // LÒGICA PER A CATEGORIA: Utilitza la 5a columna si existeix, altrament usa el categoryName passat
+                    const explicitCategory = cleanedParts.length >= 5 && cleanedParts[4] ? cleanedParts[4] : '';
+                    const finalCategory = explicitCategory || categoryName;
+
+                    if (uri && title && finalCategory) {
+                        tracks.push({
+                            uri: uri,
+                            title: title,
+                            artist: artist,
+                            year: year,
+                            category: finalCategory,
+                        });
+                    }
+                }
+            }
+            return tracks;
+        }
 
         /** Mostra el reproductor de Spotify buit */
         function showInitialPlayerMessage() {
-            // Missatge inicial amb color i negreta, i emoticones colorides (🎤, ✨)
             let message = '';
             if (!spotifyAccountType) {
-                // MISSATGE ACTUALITZAT: S'ha eliminat 'teu'
                 message = `✨ Tria el tipus de compte Spotify 🎤`;
             } else {
                 message = `✨ Selecciona una o més categories 🎤<br>
@@ -1056,7 +281,6 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
 
         /** Oculta el contingut dinàmic suaument (s'usa per a transicions) */
         function hideDynamicContent() {
-            // Aplica les classes de fade-out. Els min-height a l'HTML asseguren que l'espai no es col·lapsa.
             dynamicContentContainer.classList.add('opacity-0', 'scale-95');
             categoryContainer.classList.add('opacity-0', 'scale-95');
         }
@@ -1072,13 +296,10 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                 nouHitButton.classList.remove('bg-red-600', 'hover:bg-red-700', 'text-white');
                 nouHitButton.classList.add('bg-green-500', 'hover:bg-green-600', 'text-gray-900');
                 
-                // Activem/Desactivem el botó basat en les categories seleccionades, excepte si estem en mode joc
                 if (!categoriesLocked) {
-                    // Si ja s'ha triat el compte
                     if (spotifyAccountType) {
-                        updateButtonState(); // Usem la funció global
+                        updateButtonState(); 
                     } else {
-                        // Si encara no s'ha triat el compte, el botó segueix deshabilitat.
                         nouHitButton.disabled = true;
                     }
                 }
@@ -1089,7 +310,6 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
         function updateButtonState() {
             const checkboxes = document.querySelectorAll('input[name="category"]');
             const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-            // El botó només s'activa si el compte està triat I alguna categoria marcada
             nouHitButton.disabled = !(spotifyAccountType && anyChecked);
         }
 
@@ -1119,62 +339,15 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             updateButtonState();
         }
 
-        /** Processa el contingut d'un fitxer pujat. */
+        /** Processa el contingut d'un fitxer local pujat (wrapper per parseCsvContent). */
         function processFile(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const fileContent = event.target.result;
-                    const lines = fileContent.trim().split('\n');
-                    const tracks = [];
-                    // Extreu el nom del fitxer sense extensió com a categoria
-                    const category = file.name.split('.').slice(0, -1).join('.') || file.name;
-
-                    if (lines.length <= 1) { 
-                        resolve(tracks);
-                        return;
-                    }
-
-                    // Forcem el delimitador a punt i coma (;) per consistència amb les instruccions
-                    const delimiter = ';'; 
-
-                    // Ignorem la primera línia (capçalera) si no hi ha cançons en una línia
-                    const startLine = (lines[0].split(delimiter).length >= 4 && lines[0].toLowerCase().includes('spotify')) ? 1 : 0;
-
-                    for (let i = startLine; i < lines.length; i++) { 
-                        const line = lines[i].trim();
-                        if (!line) continue; 
-
-                        // IMPORTANT: Utilitzem el delimitador estricte de punt i coma (;)
-                        const parts = line.split(delimiter);
-                        
-                        const cleanedParts = parts.map(part => {
-                            // Netegem possibles cometes d'encapsulament (opcional)
-                            return part.trim().replace(/^"|"$/g, '');
-                        });
-
-                        // Esperem 4 columnes: URI, Títol, Artista, Data
-                        if (cleanedParts.length >= 4) {
-                            const uri = cleanedParts[0]; 	
-                            const title = cleanedParts[1]; 	
-                            const artist = cleanedParts[2]; 	
-                            const yearData = cleanedParts[3]; // Conté la data completa
-                            
-                            // Lògica per extreure els 4 dígits consecutius (l'any)
-                            const yearMatch = yearData.match(/\d{4}/);
-                            const year = yearMatch ? yearMatch[0] : 'N/A';
-
-                            if (uri && title) {
-                                tracks.push({
-                                    uri: uri,
-                                    title: title,
-                                    artist: artist,
-                                    year: year,
-                                    category: category,
-                                });
-                            }
-                        }
-                    }
+                    // El nom de la categoria serà el nom del fitxer (sense extensió) si no es troba en la 5a columna.
+                    const categoryName = file.name.split('.').slice(0, -1).join('.') || file.name;
+                    const tracks = parseCsvContent(fileContent, categoryName);
                     resolve(tracks);
                 };
                 reader.onerror = (error) => reject(error);
@@ -1182,7 +355,7 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             });
         }
 
-        /** Gestiona la selecció de fitxers. */
+        /** Gestiona la selecció de fitxers locals. */
         async function handleFileUpload(event) {
             const files = event.target.files;
             if (!files.length) return;
@@ -1217,8 +390,7 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             fileList.innerHTML = ''; 
 
             if (allTracksFromFile.length > 0) {
-                // 3. Renderitza les categories amb les categories noves marcades
-                renderSetupSection(); // Crida la funció de configuració
+                renderSetupSection(); 
             }
 
             uploadButton.disabled = false;
@@ -1226,9 +398,92 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             fileInput.value = ''; 
         }
         
-        /** Actualitza l'estil d'una etiqueta (label) segons si el seu checkbox 
-         * està marcat o no.
+        /** * Funció per descobrir dinàmicament fitxers CSV del repositori
+         * i processar-los.
          */
+        async function fetchRemoteCsvs() {
+            const baseElement = document.getElementById('file-list');
+            baseElement.innerHTML = `<span class="text-blue-400">🔍 Buscant categories remotes a la carpeta 'dades' (API GitHub)...</span>`;
+            
+            let remoteFilesToLoad = [];
+            let successfullyLoadedCount = 0;
+
+            // PAS 1: Descobrir fitxers mitjançant l'API de GitHub
+            try {
+                // Notar que la URL ara apunta al subdirectori 'dades'
+                const apiResponse = await fetch(GITHUB_API_URL);
+                if (!apiResponse.ok) {
+                     // Si no es pot accedir a l'API (p. ex., limitació de tarifa), es continua
+                    console.error(`Error de l'API de GitHub: ${apiResponse.statusText}. Es continua sense la càrrega dinàmica.`);
+                } else {
+                    const contents = await apiResponse.json();
+                    if (Array.isArray(contents)) {
+                        // Filtrem només fitxers .csv que no estiguin ja carregats
+                        remoteFilesToLoad = contents
+                            .filter(item => 
+                                item.type === 'file' && 
+                                item.name.toLowerCase().endsWith('.csv') && 
+                                !loadedFileNames.includes(item.name)
+                            )
+                            .map(item => item.name);
+                    }
+                }
+            } catch (error) {
+                console.warn("No s'ha pogut connectar a l'API de GitHub. Utilitzant només llistes internes i locals.", error);
+            }
+            
+            // PAS 2: Carregar el contingut dels fitxers descoberts des de GitHub Pages
+            const fetchPromises = remoteFilesToLoad.map(async (filename) => {
+                // Notar que la URL base ara inclou 'dades/'
+                // FIX: Utilitzem encodeURIComponent per gestionar espais i caràcters especials als noms de fitxer (com 'Summer Party.csv' o 'Bàsic.csv')
+                const encodedFilename = encodeURIComponent(filename); 
+                const url = `${REMOTE_BASE_URL}${encodedFilename}`; 
+                const categoryName = filename.split('.').slice(0, -1).join('.') || filename;
+                
+                try {
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        // Això és estrany si l'API l'ha trobat, però ho gestionem
+                        throw new Error(`Error HTTP carregant ${filename}: ${response.status}`);
+                    }
+                    
+                    const fileContent = await response.text();
+                    
+                    // Utilitzem el nom de fitxer com a categoria si no hi ha 5a columna
+                    const newTracks = parseCsvContent(fileContent, categoryName);
+                    
+                    if (newTracks.length > 0) {
+                        allTracksFromFile.push(...newTracks);
+                        loadedFileNames.push(filename);
+                        totalTracksCountByCategory[categoryName] = newTracks.length;
+                        
+                        // Marquem com a seleccionades per defecte totes les remotes
+                        if (!selectedCategoriesOnLoad.includes(categoryName)) {
+                            selectedCategoriesOnLoad.push(categoryName);
+                        }
+                        successfullyLoadedCount++;
+                    }
+
+                } catch (error) {
+                    console.error(`Error processant ${filename}:`, error);
+                }
+            });
+
+            await Promise.all(fetchPromises);
+            
+            // Netejar missatge de càrrega i mostrar resultat
+            if (successfullyLoadedCount > 0) {
+                baseElement.innerHTML = `<span class="text-green-400">✅ S'han carregat ${successfullyLoadedCount} categoria(s) remota(s) de la carpeta 'dades'!</span>`;
+            } else if (remoteFilesToLoad.length > 0) {
+                 // S'han descobert, però no s'han pogut carregar o no tenien dades
+                baseElement.innerHTML = `<span class="text-yellow-400">⚠️ Les categories remotes s'han detectat, però hi ha hagut un error en la càrrega.</span>`;
+            } else {
+                baseElement.innerHTML = `<span class="text-gray-400">No s'han trobat fitxers CSV addicionals a la carpeta 'dades' del repositori.</span>`;
+            }
+        }
+
+        /** Actualitza l'estil d'una etiqueta (label) segons si el seu checkbox està marcat o no. */
         function updateCategoryStyle(labelElement) {
             const checkbox = labelElement.querySelector('input[type="checkbox"]');
             const span = labelElement.querySelector('span');
@@ -1237,16 +492,15 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                 // Estil Seleccionat: Fons verd, Text negre, Text en negreta
                 labelElement.classList.remove('bg-gray-700/50', 'text-white', 'hover:bg-gray-700');
                 labelElement.classList.add('bg-green-500', 'text-gray-900', 'hover:bg-green-600', 'shadow-md');
-                span.classList.add('font-bold'); // AFegir NEGRETA
+                span.classList.add('font-bold'); 
                 
-                // Assegurem que el checkbox també sigui visible si hi ha estil de fons fosc
                 checkbox.classList.remove('text-green-500');
                 checkbox.classList.add('text-gray-900');
             } else {
                 // Estil per Defecte: Fons gris fosc, Text blanc, Text normal
                 labelElement.classList.remove('bg-green-500', 'text-gray-900', 'hover:bg-green-600', 'shadow-md');
                 labelElement.classList.add('bg-gray-700/50', 'text-white', 'hover:bg-gray-700');
-                span.classList.remove('font-bold'); // Treure NEGRETA
+                span.classList.remove('font-bold'); 
                 
                 checkbox.classList.remove('text-gray-900');
                 checkbox.classList.add('text-green-500');
@@ -1256,155 +510,140 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
 
         /** Renderitza la secció de selecció de compte i categories */
         function renderSetupSection() {
-            // Assegurem que l'estat és de selecció
             categoriesLocked = false;
-            uploadSection.classList.remove('hidden'); 
-            uploadButton.parentElement.parentElement.querySelector('.flex-shrink-0').classList.remove('hidden'); // Mostra botó 'i'
-            uploadButton.classList.remove('hidden'); 
+            
             nouHitButton.classList.remove('hidden');
             mostrarInfoButton.classList.add('hidden');
             
             showInitialPlayerMessage();
             
-            // Neteja i assegura la visibilitat immediatament
-            dynamicContentContainer.innerHTML = '';
-            categoryContainer.innerHTML = '';
-            dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
-            categoryContainer.classList.remove('opacity-0', 'scale-95');
+            // Transició
+            hideDynamicContent(); 
+            
+            setTimeout(() => {
+                dynamicContentContainer.innerHTML = '';
+                categoryContainer.innerHTML = '';
+                dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
+                categoryContainer.classList.remove('opacity-0', 'scale-95');
 
-            if (!spotifyAccountType) {
+                if (!spotifyAccountType) {
+                    // =================================
+                    // PAS 1: SELECCIÓ DE COMPTE SPOTIFY
+                    // =================================
+                    
+                    uploadSection.classList.add('hidden'); 
+
+                    dynamicContentContainer.innerHTML = `
+                        <div class="py-4 w-full px-4">
+                            <p class="text-lg font-semibold mb-6">Tria el tipus de compte Spotify</p>
+                            <div class="space-y-4">
+                                <button data-account="premium" class="account-choice w-full bg-green-500 hover:bg-green-600 text-gray-900 font-bold py-3 rounded-lg transition duration-150 shadow-md">
+                                    Premium
+                                </button>
+                                <button data-account="free" class="account-choice w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg transition duration-150 shadow-md">
+                                    Gratuït
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    nouHitButton.disabled = true;
+
+                    document.querySelectorAll('.account-choice').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            spotifyAccountType = e.target.getAttribute('data-account');
+                            selectedCategoriesOnLoad = []; 
+                            renderSetupSection(); 
+                        });
+                    });
+                    return; 
+                }
+
                 // =================================
-                // PAS 1: SELECCIÓ DE COMPTE SPOTIFY
+                // PAS 2: SELECCIÓ DE CATEGORIES (Si ja s'ha escollit el compte)
                 // =================================
+                
+                uploadSection.classList.remove('hidden'); 
+
+                // Obtenim totes les categories úniques
+                const allCategories = [...new Set(allTracksFromFile.map(track => track.category))].sort(); // Ordenació alfabètica
+                
+                let categoryCheckboxes = '';
+                allCategories.forEach(category => {
+                    // Recomptem quantes cançons hi ha disponibles *en el total carregat*
+                    const count = allTracksFromFile.filter(t => t.category === category).length; 
+                    
+                    const isChecked = selectedCategoriesOnLoad.includes(category);
+                    
+                    const baseClasses = 'flex items-center cursor-pointer p-2 text-sm sm:text-base rounded-lg transition duration-150';
+                    
+                    // Afegir el recompte al costat del nom de la categoria
+                    const displayCategory = `${category} (${count} hits)`;
+
+                    categoryCheckboxes += `
+                        <label class="category-label ${baseClasses}" data-category="${category}">
+                            <input type="checkbox" name="category" value="${category}" class="form-checkbox focus:ring-green-500 rounded" ${isChecked ? 'checked' : ''}>
+                            <span class="ml-2">${displayCategory}</span>
+                        </label>
+                    `;
+                });
+
                 dynamicContentContainer.innerHTML = `
-                    <div class="py-4 w-full px-4">
-                        <p class="text-lg font-semibold mb-6">Tria el tipus de compte Spotify</p>
-                        <div class="space-y-4">
-                            <button data-account="premium" class="account-choice w-full bg-green-500 hover:bg-green-600 text-gray-900 font-bold py-3 rounded-lg transition duration-150 shadow-md">
-                                Premium
+                    <div class="py-4 w-full">
+                        <p class="text-sm text-gray-400 text-center mb-4">Tria una o més categories</p>
+
+                        <!-- BOTONS SELECCIONAR/DESSELECCIONAR TOTS -->
+                        <div class="flex justify-center space-x-3 mb-4 px-2 sm:px-4">
+                            <button id="select-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">
+                                Seleccionar totes
                             </button>
-                            <button data-account="free" class="account-choice w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg transition duration-150 shadow-md">
-                                Gratuït
+                            <button id="deselect-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">
+                                Deseleccionar totes
                             </button>
+                        </div>
+
+                        <div id="category-grid" class="grid grid-cols-2 gap-3 px-2 sm:px-4">
+                            ${categoryCheckboxes}
                         </div>
                     </div>
                 `;
                 
-                // Desactivem el botó de Nou Hit fins que no s'esculli el compte
-                nouHitButton.disabled = true;
+                dynamicContentContainer.classList.add('opacity-100', 'scale-100');
 
-                document.querySelectorAll('.account-choice').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        spotifyAccountType = e.target.getAttribute('data-account');
-                        // Reiniciem l'estat de selecció de categories
-                        selectedCategoriesOnLoad = []; 
-                        // Tornem a renderitzar per mostrar les categories
-                        renderSetupSection(); 
+
+                const labels = document.querySelectorAll('.category-label');
+                
+                const selectAllBtn = document.getElementById('select-all-btn');
+                const deselectAllBtn = document.getElementById('deselect-all-btn');
+
+                if (selectAllBtn) selectAllBtn.addEventListener('click', selectAllCategories);
+                if (deselectAllBtn) deselectAllBtn.addEventListener('click', deselectAllCategories);
+
+
+                labels.forEach(label => {
+                    updateCategoryStyle(label);
+                    
+                    label.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+                        updateCategoryStyle(label);
+                        updateButtonState();
                     });
                 });
-                return; // Sortim, ja que l'usuari ha de triar el compte primer
-            }
 
-            // =================================
-            // PAS 2: SELECCIÓ DE CATEGORIES (Si ja s'ha escollit el compte)
-            // =================================
-
-            // Obtenim totes les categories úniques
-            const allCategories = [...new Set(allTracksFromFile.map(track => track.category))];
-            
-            let categoryCheckboxes = '';
-            allCategories.forEach(category => {
-                // Ús de la variable global totalTracksCountByCategory
-                const count = totalTracksCountByCategory[category] || 0; 
-                
-                // Si la categoria està en l'array selectedCategoriesOnLoad, es marca
-                const isChecked = selectedCategoriesOnLoad.includes(category);
-                
-                // Definim les classes inicials. Es tria l'estil per defecte, que s'actualitzarà després
-                const baseClasses = 'flex items-center cursor-pointer p-2 text-sm sm:text-base rounded-lg transition duration-150';
-                
-                // Afegir el recompte al costat del nom de la categoria
-                const displayCategory = `${category} (${count})`;
-
-                categoryCheckboxes += `
-                    <label class="category-label ${baseClasses}" data-category="${category}">
-                        <input type="checkbox" name="category" value="${category}" class="form-checkbox focus:ring-green-500 rounded" ${isChecked ? 'checked' : ''}>
-                        <span class="ml-2">${displayCategory}</span>
-                    </label>
-                `;
-            });
-
-            // Ús de grid grid-cols-2 i gap-3 per crear la disposició de dues columnes
-            dynamicContentContainer.innerHTML = `
-                <div class="py-4 w-full">
-                    <p class="text-sm text-gray-400 text-center mb-4">Tria una o més categories</p>
-
-                    <!-- NOU: BOTONS SELECCIONAR/DESSELECCIONAR TOTS -->
-                    <div class="flex justify-center space-x-3 mb-4 px-2 sm:px-4">
-                        <button id="select-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">
-                            Seleccionar totes
-                        </button>
-                        <button id="deselect-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">
-                            Deseleccionar totes
-                        </button>
-                    </div>
-                    <!-- FI NOU -->
-
-                    <div id="category-grid" class="grid grid-cols-2 gap-3 px-2 sm:px-4">
-                        ${categoryCheckboxes}
-                    </div>
-                </div>
-            `;
-            
-            // Assegura l'aparició
-            dynamicContentContainer.classList.add('opacity-100', 'scale-100');
-
-
-            const checkboxes = document.querySelectorAll('input[name="category"]');
-            const labels = document.querySelectorAll('.category-label');
-            
-            // Afegim els listeners als botons de Selecció/Deselecció
-            const selectAllBtn = document.getElementById('select-all-btn');
-            const deselectAllBtn = document.getElementById('deselect-all-btn');
-
-            if (selectAllBtn) selectAllBtn.addEventListener('click', selectAllCategories);
-            if (deselectAllBtn) deselectAllBtn.addEventListener('click', deselectAllCategories);
-
-
-            // Aplica els estils inicials i afegeix l'esdeveniment de canvi
-            labels.forEach(label => {
-                // Apliquem l'estil basat en l'estat inicial (selectedCategoriesOnLoad)
-                updateCategoryStyle(label);
-                
-                // Afegim l'esdeveniment per canviar l'estil i l'estat del botó en temps real
-                label.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
-                    updateCategoryStyle(label);
-                    updateButtonState();
-                });
-            });
-
-            updateButtonState(); // Estat inicial del botó
+                updateButtonState(); 
+            }, 300); // Temps per a la transició
         }
         
         /** Reinicia l'estat del joc per tornar a la selecció de categories */
         function resetGame() {
-            // Re-inicialitzem l'estat clau del joc
             categoriesLocked = false;
             availableTracks = [];
             currentTrack = null;
-            // IMPORTANT: Reiniciem el compte per forçar la tria al pas 1
             spotifyAccountType = null;
             
-            // Esborrem les categories seleccionades per assegurar que cap checkbox estigui marcat.
             selectedCategoriesOnLoad = [];
             
-            // Re-activem els botons de pujada
-            uploadButton.classList.remove('hidden'); 
-
-            // 1. Amaguem el contingut actual amb transició (fade-out)
             hideDynamicContent(); 
             
-            // 2. Esperem el temps de transició (300ms) abans de renderitzar la nova vista
             setTimeout(renderSetupSection, 300);
         }
 
@@ -1421,14 +660,16 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             // LÒGICA NOU: Determina el punt d'inici (0s per Free, 60s per Premium)
             const startSeconds = spotifyAccountType === 'free' ? 0 : 60; 
             
-            // Utilitza 't=' amb la variable startSeconds.
             const urlToLoad = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&autoplay=1&t=${startSeconds}`;
             
             const iframe = document.createElement('iframe');
             iframe.style.borderRadius = '12px';
             iframe.src = urlToLoad;
-            iframe.width = '100%';
-            iframe.height = '152';
+            
+            // Mantenir l'amplada al 100% i l'altura fixa de 160px.
+            iframe.width = '100%'; 
+            iframe.height = '160'; 
+            
             iframe.frameBorder = '0';
             iframe.allowFullscreen = true;
             iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
@@ -1436,8 +677,8 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             
             const mask = document.createElement('div');
             mask.id = 'player-mask';
+            // Màscara per amagar l'any al reproductor
             mask.className = 'absolute inset-0 bg-gray-800 rounded-lg transition-opacity duration-500';
-            // Aquest CSS s'utilitza per amagar una part del reproductor de Spotify si cal
             mask.style.webkitMaskImage = 'radial-gradient(circle at 92% 82%, transparent 19px, black 19px)';
             mask.style.maskImage = 'radial-gradient(circle at 92% 82%, transparent 19px, black 19px)';
             mask.style.pointerEvents = 'none';
@@ -1468,7 +709,7 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             if (nouHitButton.disabled) return;
 
             if (!categoriesLocked) {
-                // PRIMERA TIRADA: Bloqueja les categories i inicia el joc
+                // Selecció inicial de pistes
                 selectedCategoriesOnLoad = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(input => input.value);
                 
                 if (selectedCategoriesOnLoad.length === 0) {
@@ -1477,7 +718,6 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                 }
                 
                 if (!spotifyAccountType) {
-                    // MISSATGE ACTUALITZAT: S'ha eliminat 'teu'
                     showButtonError('Tria el tipus de compte Spotify');
                     return;
                 }
@@ -1490,52 +730,41 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                 }
                 
                 categoriesLocked = true;
-                // Amaguem el botó de pujar fitxer un cop iniciat el joc
-                uploadButton.parentElement.parentElement.querySelector('.flex-shrink-0').classList.add('hidden'); // Oculta el botó 'i'
-                uploadButton.classList.add('hidden'); 
                 
-                // 1. Iniciem la transició d'ocultació del contingut de categories
+                uploadSection.classList.add('hidden');
+                
                 hideDynamicContent(); 
-                nouHitButton.disabled = true; // Desactivem durant la transició i càrrega
+                nouHitButton.disabled = true; 
                 
-                // Esperem que la transició visual acabi (300ms)
                 setTimeout(() => {
-                    // 2. Neteja total del contingut un cop s'ha ocultat per mantenir el contenidor buit
                     dynamicContentContainer.innerHTML = '';
                     categoryContainer.innerHTML = '';
                     
-                    // 3. Carreguem la nova pista i el reproductor
                     loadTrackAndPlayer();
                     
-                    // Assegurem que les classes de visibilitat es reverteixen (opacity: 100) per quan es mostri la info
                     dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
                     categoryContainer.classList.remove('opacity-0', 'scale-95');
                 }, 300);
 
 
             } else {
-                // TIRADES SUBSEQUENTS: Amaga la info anterior, i carrega el nou hit
+                // TIRADES SUBSEQUENTS
                 
-                // COMPROVACIÓ DE FI DE JOC ABANS DE CARREGAR (Correcció: es fa quan es clica Nou Hit)
                 if (availableTracks.length === 0) {
-                    // Fi de joc: Deshabilita el botó i mostra l'avís
                     nouHitButton.disabled = true;
                     mostrarInfoButton.classList.add('hidden');
-                    // Missatge final amb emoticones (disc, guitarra)
                     playerContainer.innerHTML = `<p class="text-white font-bold text-center p-4 text-xl">
                         💿 Ja no queden cançons per mostrar 🎸<br>
                         <span class="text-sm text-gray-400">(Reiniciant en 5 segons)</span>
                     </p>`;
                     hideDynamicContent(); 
-                    // Reinicia l'estat després de 5 segons (5000ms)
                     setTimeout(resetGame, 5000); 
                     return;
                 }
                 
                 nouHitButton.disabled = true;
-                hideDynamicContent(); // Inicia la transició visual de la informació anterior (fade-out)
+                hideDynamicContent(); 
                 
-                // Espera 300ms (la durada de la transició) i carrega la nova pista
                 setTimeout(loadTrackAndPlayer, 300);
             }
         }
@@ -1550,23 +779,21 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
             const mask = document.getElementById('player-mask');
             if (mask) mask.remove();
             
-            // Amaga el contingut abans d'injectar per fer la transició (inicia fade-out)
             dynamicContentContainer.classList.add('opacity-0', 'scale-95');
             categoryContainer.classList.add('opacity-0', 'scale-95');
 
             // CÀLCULS PER AL PROGRÉS
             const currentCategory = currentTrack.category;
-            const totalCount = totalTracksCountByCategory[currentCategory] || 0;
             
-            // Comptem quants queden disponibles d'aquesta categoria (ja estan a availableTracks)
+            // Recaptem el total de cançons d'aquesta categoria
+            const totalCount = allTracksFromFile.filter(t => t.category === currentCategory).length;
+            
             const remainingCount = availableTracks.filter(track => track.category === currentCategory).length;
             
-            // Cançons jugades = Total - Restants. (Inclou la cançó que s'acaba de revelar)
             const playedCount = totalCount - remainingCount;
 
 
             setTimeout(() => {
-                // Neteja immediatament i assegura que no hi ha classes d'ocultació per al nou contingut
                 dynamicContentContainer.innerHTML = '';
                 categoryContainer.innerHTML = '';
                 dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
@@ -1592,60 +819,60 @@ spotify:track:32OlwWuMpZ6b0aN2RZOeMS;Uptown Funk (feat. Bruno Mars);Mark Ronson,
                     </p>
                 `;
                 
-                // Amaguem el botó Mostrar Info i mostrem el Nou Hit.
                 mostrarInfoButton.classList.add('hidden');
                 nouHitButton.classList.remove('hidden');
                 
-                // IMPORTANT: NO desactivem aquí el botó.
-                // Es deixa actiu per permetre el clic que desencadena la comprovació de fi de joc.
                 nouHitButton.disabled = false;
 
             }, 300);
         }
+        
+        /** Simula el canvi d'orientació */
+        function toggleOrientationSimulation() {
+            isSimulatedLandscape = !isSimulatedLandscape;
+            
+            if (isSimulatedLandscape) {
+                mainCard.classList.add('landscape-mode');
+                toggleOrientationBtn.textContent = '📐'; 
+                toggleOrientationBtn.title = 'Tornar a Vertical';
+            } else {
+                mainCard.classList.remove('landscape-mode');
+                toggleOrientationBtn.textContent = '🔄'; 
+                toggleOrientationBtn.title = 'Passar a Horitzontal';
+            }
+        }
 
         /** Inicialitza les dades i els listeners */
-        function initialize() {
-            // 1. Processar el fitxer CSV intern com si fos un fitxer pujat
-            const internalTracks = processInternalCsv(csvData);
-            allTracksFromFile.push(...internalTracks);
+        async function initialize() {
+            // 1. La variable csvData ja està buida i no es processa cap dada interna.
+            //    La lògica de processament d'InternalCSV ha estat eliminada.
             
-            // 2. Calcular els totals per categoria inicials
-            allTracksFromFile.forEach(track => {
-                totalTracksCountByCategory[track.category] = (totalTracksCountByCategory[track.category] || 0) + 1;
-            });
+            // 2. Carregar fitxers remots dinàmicament
+            await fetchRemoteCsvs(); 
             
-            // 3. Inicialitzar la vista (Selecció de compte)
+            // 3. Recalcular els totals per categoria
+            totalTracksCountByCategory = allTracksFromFile.reduce((acc, track) => {
+                acc[track.category] = (acc[track.category] || 0) + 1;
+                return acc;
+            }, {});
+            
+            // 4. Inicialitzar la vista (Selecció de compte)
             renderSetupSection();
 
-            // 4. Afegir listeners
+            // 5. Afegir listeners
             nouHitButton.addEventListener('click', handleNouHitClick);
             mostrarInfoButton.addEventListener('click', handleMostrarInfoClick);
             uploadButton.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', handleFileUpload);
-        }
-
-        /** Processa les dades CSV dures per a la inicialització. */
-        function processInternalCsv(data) {
-            const lines = data.trim().split('\n');
-            const tracks = [];
             
-            if (lines.length <= 1) return [];
-            
-            const delimiter = ';';
-            const startLine = 1; // Sempre saltem la capçalera interna
+            // 6. Listener per al botó de simulació
+            toggleOrientationBtn.addEventListener('click', toggleOrientationSimulation);
+            toggleOrientationBtn.title = 'Passar a Horitzontal'; 
 
-            for (let i = startLine; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                
-                const parts = line.split(delimiter);
-                
-                if (parts.length >= 5) { // Esperem 5 columnes per a les dades internes
-                    const [uri, title, artist, year, category] = parts.map(p => p.trim().replace(/^"|"$/g, ''));
-                    tracks.push({ uri, title, artist, year, category });
-                }
+            // 7. Comprovar l'orientació real inicial
+            if (window.innerWidth >= 1024) { 
+                toggleOrientationSimulation();
             }
-            return tracks;
         }
 
         // --- INICI DE L'APLICACIÓ ---
