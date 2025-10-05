@@ -191,19 +191,17 @@
         const mainCard = document.getElementById('main-card');
         const toggleOrientationBtn = document.getElementById('toggle-orientation-btn');
 
-        // --- Dades de les cançons del fitxer CSV intern (delimitat per ';') ---
-        const csvData = ``;
-        
-        // --- Constants per a la càrrega remota (ACTUALITZADES PER APUNTAR A LA CARPETA 'dades') ---
-        // URL base de GitHub Pages per obtenir el contingut del fitxer
-        const REMOTE_BASE_URL = 'https://xaviuab.github.io/Hitster_Digital/dades/';
+        // --- Constants per a la càrrega remota ---
+        // URL de contingut RAW de GitHub (Més fiable per a fitxers amb '.' o '_')
+        const REMOTE_CONTENT_BASE_URL = 'https://raw.githubusercontent.com/xaviuab/Hitster_Digital/main/dades/';
         // URL de l'API de GitHub per descobrir els fitxers
         const GITHUB_API_URL = "https://api.github.com/repos/xaviuab/Hitster_Digital/contents/dades";
         
         // --- Estat de l'aplicació ---
         let errorTimeout;
         let allTracksFromFile = [];
-        let loadedFileNames = [];
+        // Array d'objectes per guardar nom del fitxer i si és prioritari
+        let loadedFileMetadata = []; 
         let availableTracks = [];
         let currentTrack;
         let categoriesLocked = false;
@@ -213,10 +211,26 @@
         let isSimulatedLandscape = false;
 
 
+        /** * Funció per obtenir el nom de la categoria netejat.
+         * Neteja l'extensió .csv/.txt i qualsevol punt ('.') o guió baix ('_') inicial.
+         * @param {string} filename - Nom del fitxer (p. ex., '.Hitster.csv' o '_Summer Party.txt').
+         * @returns {string} Nom de la categoria netejat (p. ex., 'Hitster' o 'Summer Party').
+         */
+        function getCleanCategoryName(filename) {
+            let baseName = filename.split('.').slice(0, -1).join('.');
+            // Bucle per eliminar múltiples punts o guions baixos inicials si n'hi hagués
+            while (baseName.startsWith('.') || baseName.startsWith('_')) {
+                baseName = baseName.substring(1); 
+            }
+            // Si després de la neteja queda buit, tornem al nom original sencer
+            return baseName || filename;
+        }
+
         /** * Funció unificada per parsejar el contingut CSV. 
          * Retorna un array d'objectes de pista.
+         * La categoria SEMPRE s'extreu del nom del fitxer, no de la 5a columna.
          * @param {string} fileContent - Contingut brut del fitxer CSV.
-         * @param {string} categoryName - Nom de la categoria a utilitzar si no hi ha 5a columna.
+         * @param {string} categoryName - Nom de la categoria a utilitzar (basat en el nom del fitxer).
          */
         function parseCsvContent(fileContent, categoryName) {
             const tracks = [];
@@ -234,6 +248,7 @@
 
                 const parts = line.split(delimiter);
                 
+                // Netejar les cometes dobles
                 const cleanedParts = parts.map(part => part.trim().replace(/^"|"$/g, ''));
 
                 // Esperem 4 columnes mínim: URI, Títol, Artista, Any
@@ -247,9 +262,8 @@
                     const yearMatch = yearData.match(/\d{4}/);
                     const year = yearMatch ? yearMatch[0] : 'N/A';
                     
-                    // LÒGICA PER A CATEGORIA: Utilitza la 5a columna si existeix, altrament usa el categoryName passat
-                    const explicitCategory = cleanedParts.length >= 5 && cleanedParts[4] ? cleanedParts[4] : '';
-                    const finalCategory = explicitCategory || categoryName;
+                    // La categoria és SEMPRE el nom del fitxer (netejar)
+                    const finalCategory = categoryName;
 
                     if (uri && title && finalCategory) {
                         tracks.push({
@@ -341,15 +355,17 @@
         }
 
         /** Processa el contingut d'un fitxer local pujat (wrapper per parseCsvContent). */
-        function processFile(file) {
+        async function processFile(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const fileContent = event.target.result;
-                    // El nom de la categoria serà el nom del fitxer (sense extensió) si no es troba en la 5a columna.
-                    const categoryName = file.name.split('.').slice(0, -1).join('.') || file.name;
+                    
+                    // UTILITZAR LA NOVA FUNCIÓ DE NETEJA
+                    const categoryName = getCleanCategoryName(file.name);
+                    
                     const tracks = parseCsvContent(fileContent, categoryName);
-                    resolve(tracks);
+                    resolve({tracks, categoryName, isPriority: file.name.startsWith('_')});
                 };
                 reader.onerror = (error) => reject(error);
                 reader.readAsText(file);
@@ -368,13 +384,17 @@
             selectedCategoriesOnLoad = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(input => input.value);
 
             for (const file of files) {
-                const categoryName = file.name.split('.').slice(0, -1).join('.') || file.name;
-
-                if (loadedFileNames.includes(file.name)) continue;
+                // Utilitzem el nom original per comprovar si ja està carregat
+                if (loadedFileMetadata.some(meta => meta.originalName === file.name)) continue; 
                 try {
-                    const newTracks = await processFile(file);
+                    const { tracks: newTracks, categoryName, isPriority } = await processFile(file);
+                    
                     allTracksFromFile.push(...newTracks);
-                    loadedFileNames.push(file.name);
+                    loadedFileMetadata.push({ 
+                        originalName: file.name, 
+                        cleanName: categoryName,
+                        isPriority: isPriority 
+                    });
                     
                     // Actualitzar el recompte total amb les noves cançons
                     totalTracksCountByCategory[categoryName] = (totalTracksCountByCategory[categoryName] || 0) + newTracks.length;
@@ -400,7 +420,7 @@
         }
         
         /** * Funció per descobrir dinàmicament fitxers CSV del repositori
-         * i processar-los.
+         * i processar-los, prioritzant els fitxers amb '_' al principi.
          */
         async function fetchRemoteCsvs() {
             const baseElement = document.getElementById('file-list');
@@ -411,55 +431,65 @@
 
             // PAS 1: Descobrir fitxers mitjançant l'API de GitHub
             try {
-                // Notar que la URL ara apunta al subdirectori 'dades'
                 const apiResponse = await fetch(GITHUB_API_URL);
                 if (!apiResponse.ok) {
-                     // Si no es pot accedir a l'API (p. ex., limitació de tarifa), es continua
                     console.error(`Error de l'API de GitHub: ${apiResponse.statusText}. Es continua sense la càrrega dinàmica.`);
                 } else {
                     const contents = await apiResponse.json();
                     if (Array.isArray(contents)) {
-                        // Filtrem només fitxers .csv que no estiguin ja carregats
-                        remoteFilesToLoad = contents
+                        
+                        const allCsvFiles = contents
                             .filter(item => 
                                 item.type === 'file' && 
                                 item.name.toLowerCase().endsWith('.csv') && 
-                                !loadedFileNames.includes(item.name)
+                                !item.name.startsWith('.') && // NOU: Excloure fitxers que comencen per '.'
+                                !loadedFileMetadata.some(meta => meta.originalName === item.name) // Evita duplicats
                             )
                             .map(item => item.name);
+                        
+                        // SEPARACIÓ I REORDENACIÓ: 
+                        // Ara només separem entre prioritaris ('_') i la resta (normals)
+                        const underscoreFiles = allCsvFiles.filter(name => name.startsWith('_'));
+                        const otherFiles = allCsvFiles.filter(name => !name.startsWith('_'));
+
+                        // Priorització: Underscores, Després la resta
+                        remoteFilesToLoad = underscoreFiles.concat(otherFiles);
                     }
                 }
             } catch (error) {
                 console.warn("No s'ha pogut connectar a l'API de GitHub. Utilitzant només llistes internes i locals.", error);
             }
             
-            // PAS 2: Carregar el contingut dels fitxers descoberts des de GitHub Pages
+            // PAS 2: Carregar el contingut dels fitxers descoberts des de GitHub RAW CONTENT URL
             const fetchPromises = remoteFilesToLoad.map(async (filename) => {
-                // Notar que la URL base ara inclou 'dades/'
-                // FIX: Utilitzem encodeURIComponent per gestionar espais i caràcters especials als noms de fitxer (com 'Summer Party.csv' o 'Bàsic.csv')
                 const encodedFilename = encodeURIComponent(filename); 
-                const url = `${REMOTE_BASE_URL}${encodedFilename}`; 
-                const categoryName = filename.split('.').slice(0, -1).join('.') || filename;
+                const url = `${REMOTE_CONTENT_BASE_URL}${encodedFilename}`; 
                 
+                const categoryName = getCleanCategoryName(filename); 
+                const isPriority = filename.startsWith('_'); // Detectar prioritat
+
                 try {
                     const response = await fetch(url);
                     
                     if (!response.ok) {
-                        // Això és estrany si l'API l'ha trobat, però ho gestionem
                         throw new Error(`Error HTTP carregant ${filename}: ${response.status}`);
                     }
                     
                     const fileContent = await response.text();
                     
-                    // Utilitzem el nom de fitxer com a categoria si no hi ha 5a columna
                     const newTracks = parseCsvContent(fileContent, categoryName);
                     
                     if (newTracks.length > 0) {
                         allTracksFromFile.push(...newTracks);
-                        loadedFileNames.push(filename);
+                        loadedFileMetadata.push({ 
+                            originalName: filename, 
+                            cleanName: categoryName,
+                            isPriority: isPriority 
+                        }); 
+                        
+                        // Guardem el recompte amb el nom de categoria *netejat*
                         totalTracksCountByCategory[categoryName] = newTracks.length;
                         
-                        // Marquem com a seleccionades per defecte totes les remotes
                         if (!selectedCategoriesOnLoad.includes(categoryName)) {
                             selectedCategoriesOnLoad.push(categoryName);
                         }
@@ -473,12 +503,13 @@
 
             await Promise.all(fetchPromises);
             
-            // Netejar missatge de càrrega i mostrar resultat
+            // NOU: Lògica per netejar missatge de càrrega
             if (successfullyLoadedCount > 0) {
-                baseElement.innerHTML = `<span class="text-green-400">✅ S'han carregat ${successfullyLoadedCount} categoria(s) remota(s) de la carpeta 'dades'!</span>`;
+                // Si l'èxit és total o parcial, no mostrem missatge d'èxit, deixem-ho buit.
+                baseElement.innerHTML = ''; 
             } else if (remoteFilesToLoad.length > 0) {
                  // S'han descobert, però no s'han pogut carregar o no tenien dades
-                baseElement.innerHTML = `<span class="text-yellow-400">⚠️ Les categories remotes s'han detectat, però hi ha hagut un error en la càrrega.</span>`;
+                baseElement.innerHTML = `<span class="text-yellow-400">⚠️ Les categories remotes s'han detectat, però hi ha hagut un error en la càrrega o estan buides.</span>`;
             } else {
                 baseElement.innerHTML = `<span class="text-gray-400">No s'han trobat fitxers CSV addicionals a la carpeta 'dades' del repositori.</span>`;
             }
@@ -489,22 +520,42 @@
             const checkbox = labelElement.querySelector('input[type="checkbox"]');
             const span = labelElement.querySelector('span');
             
+            // Obtenir el tipus (prioritari o normal) de l'element
+            const isPriority = labelElement.dataset.priority === 'true';
+
+            // Classes bàsiques per al botó seleccionat: SEMPRE VERD
+            const selectedClasses = 'bg-green-500 text-gray-900 hover:bg-green-600 shadow-md'; 
+
+            // Classes bàsiques per al botó deseleccionat
+            // NOU: Prioritari (Lighter Gray, 600) vs Normal (Dark Gray, 700/50)
+            const defaultClasses = isPriority
+                ? 'bg-gray-600 text-white hover:bg-gray-500' 
+                : 'bg-gray-700/50 text-white hover:bg-gray-700';
+
+            // Neteja classes d'estat
+            // S'han d'eliminar totes les classes de color que es puguin haver aplicat prèviament
+            labelElement.classList.remove('bg-green-500', 'hover:bg-green-600', 'bg-blue-500', 'hover:bg-blue-600', 'bg-gray-700/50', 'bg-gray-600', 'text-gray-900', 'shadow-md', 'border', 'border-transparent');
+            
+            // Neteja colors del checkbox
+            checkbox.classList.remove('text-green-500', 'text-blue-400', 'text-gray-900');
+
             if (checkbox.checked) {
-                // Estil Seleccionat: Fons verd, Text negre, Text en negreta
-                labelElement.classList.remove('bg-gray-700/50', 'text-white', 'hover:bg-gray-700');
-                labelElement.classList.add('bg-green-500', 'text-gray-900', 'hover:bg-green-600', 'shadow-md');
+                // Estil Seleccionat (Verd per a tothom)
+                labelElement.classList.add(...selectedClasses.split(' '));
                 span.classList.add('font-bold'); 
-                
-                checkbox.classList.remove('text-green-500');
-                checkbox.classList.add('text-gray-900');
+                // Quan està seleccionat (fons clar), el checkbox ha de ser fosc per contrast
+                checkbox.classList.add('text-gray-900'); 
             } else {
-                // Estil per Defecte: Fons gris fosc, Text blanc, Text normal
-                labelElement.classList.remove('bg-green-500', 'text-gray-900', 'hover:bg-green-600', 'shadow-md');
-                labelElement.classList.add('bg-gray-700/50', 'text-white', 'hover:bg-gray-700');
+                // Estil per Defecte (Gris diferent segons prioritat)
+                labelElement.classList.add(...defaultClasses.split(' '));
                 span.classList.remove('font-bold'); 
                 
-                checkbox.classList.remove('text-gray-900');
-                checkbox.classList.add('text-green-500');
+                // Color d'accent del checkbox deseleccionat
+                if (isPriority) {
+                     checkbox.classList.add('text-blue-400'); // Accent blau/cyan per contrast subtil amb gris 600
+                } else {
+                     checkbox.classList.add('text-green-500'); // Accent verd per contrast amb gris 700
+                }
             }
         }
 
@@ -566,24 +617,52 @@
                 
                 uploadSection.classList.remove('hidden'); 
 
-                // Obtenim totes les categories úniques
-                const allCategories = [...new Set(allTracksFromFile.map(track => track.category))].sort(); // Ordenació alfabètica
+                // NOU: L'ordre es fa a partir de loadedFileMetadata
+
+                // 1. Crear la llista d'informació de categories úniques
+                const categoryInfoMap = new Map(); 
+                loadedFileMetadata.forEach(meta => {
+                    if (!categoryInfoMap.has(meta.cleanName)) {
+                        categoryInfoMap.set(meta.cleanName, {
+                            cleanName: meta.cleanName,
+                            isPriority: meta.isPriority 
+                        });
+                    }
+                });
+
+                // 2. Convertir el Map a un Array per poder ordenar
+                const allCategories = Array.from(categoryInfoMap.values());
+                
+                // 3. Ordenar: Primer els prioritaris (isPriority=true), després la resta, i alfabèticament dins de cada grup
+                allCategories.sort((a, b) => {
+                    // Ordre principal: prioritat
+                    if (a.isPriority && !b.isPriority) return -1;
+                    if (!a.isPriority && b.isPriority) return 1;
+                    // Ordre secundari: alfabètic
+                    return a.cleanName.localeCompare(b.cleanName);
+                });
                 
                 let categoryCheckboxes = '';
                 allCategories.forEach(category => {
-                    // Recomptem quantes cançons hi ha disponibles *en el total carregat*
-                    const count = allTracksFromFile.filter(t => t.category === category).length; 
+                    const cleanName = category.cleanName;
+                    const isPriority = category.isPriority;
                     
-                    const isChecked = selectedCategoriesOnLoad.includes(category);
+                    // Contar el total de cançons d'aquesta categoria
+                    const count = allTracksFromFile.filter(t => t.category === cleanName).length; 
+                    
+                    const isChecked = selectedCategoriesOnLoad.includes(cleanName);
                     
                     const baseClasses = 'flex items-center cursor-pointer p-2 text-sm sm:text-base rounded-lg transition duration-150';
                     
                     // Afegir el recompte al costat del nom de la categoria
-                    const displayCategory = `${category} (${count} hits)`;
+                    const displayCategory = `${cleanName} (${count} hits)`;
 
+                    // Afegir l'atribut de dades per a l'estil prioritari
                     categoryCheckboxes += `
-                        <label class="category-label ${baseClasses}" data-category="${category}">
-                            <input type="checkbox" name="category" value="${category}" class="form-checkbox focus:ring-green-500 rounded" ${isChecked ? 'checked' : ''}>
+                        <label class="category-label ${baseClasses}" 
+                                data-category="${cleanName}"
+                                data-priority="${isPriority}">
+                            <input type="checkbox" name="category" value="${cleanName}" class="form-checkbox focus:ring-current rounded" ${isChecked ? 'checked' : ''}>
                             <span class="ml-2">${displayCategory}</span>
                         </label>
                     `;
@@ -658,7 +737,7 @@
             
             const trackId = currentTrack.uri.split(':').pop();
 
-            // LÒGICA NOU: Determina el punt d'inici (0s per Free, 60s per Premium)
+            // LÒGICA: Determina el punt d'inici (0s per Free, 60s per Premium)
             const startSeconds = spotifyAccountType === 'free' ? 0 : 60; 
             
             const urlToLoad = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&autoplay=1&t=${startSeconds}`;
@@ -682,8 +761,7 @@
             // La classe 'inset-0' ja li dóna width: 100% i height: 100%
             mask.className = 'absolute inset-0 bg-gray-800 rounded-lg transition-opacity duration-500';
             
-            // AJUST SOL·LICITAT: Moure el centre del cercle a 93% 80% (1px a l'esquerra de 94% 80%)
-            // S'ha canviat de '94% 80%' a '93% 80%'
+            // Ajustar el centre del cercle a 93% 80% (per amagar l'any al reproductor de Spotify)
             const maskPosition = '93% 80%';
             mask.style.webkitMaskImage = `radial-gradient(circle at ${maskPosition}, transparent 19px, black 19px)`;
             mask.style.maskImage = `radial-gradient(circle at ${maskPosition}, transparent 19px, black 19px)`;
@@ -728,6 +806,7 @@
                     return;
                 }
 
+                // Filtrar pistes basant-se en els noms de categoria *sense el punt ni underscore*
                 availableTracks = allTracksFromFile.filter(track => selectedCategoriesOnLoad.includes(track.category));
                 
                 if (availableTracks.length === 0) {
@@ -815,11 +894,17 @@
                     </div>
                 `;
                 
+                // Determinar si la categoria actual és prioritària per al color del text
+                const currentCategoryMeta = loadedFileMetadata.find(meta => meta.cleanName === currentCategory);
+                const isPriorityCategory = currentCategoryMeta ? currentCategoryMeta.isPriority : false;
+                // Si la categoria és prioritària, usem el blau/cyan com a accent (coherència amb el botó deseleccionat)
+                const categoryColorClass = isPriorityCategory ? 'text-blue-400' : 'text-green-400';
+
                 // Afegim el progrés (Played / Total)
                 categoryContainer.innerHTML = `
                     <p class="text-xs text-gray-400 mb-2">
                         Categoria: 
-                        <span class="font-medium text-green-400">
+                        <span class="font-medium ${categoryColorClass}">
                             ${currentCategory} (${playedCount} de ${totalCount})
                         </span>
                     </p>
@@ -850,29 +935,23 @@
 
         /** Inicialitza les dades i els listeners */
         async function initialize() {
-            // 1. Carregar fitxers remots dinàmicament
+            // 1. Carregar fitxers remots dinàmicament (incloent la nova priorització)
             await fetchRemoteCsvs(); 
             
-            // 2. Recalcular els totals per categoria
-            totalTracksCountByCategory = allTracksFromFile.reduce((acc, track) => {
-                acc[track.category] = (acc[track.category] || 0) + 1;
-                return acc;
-            }, {});
-            
-            // 3. Inicialitzar la vista (Selecció de compte)
+            // 2. Inicialitzar la vista (Selecció de compte)
             renderSetupSection();
 
-            // 4. Afegir listeners
+            // 3. Afegir listeners
             nouHitButton.addEventListener('click', handleNouHitClick);
             mostrarInfoButton.addEventListener('click', handleMostrarInfoClick);
             uploadButton.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', handleFileUpload);
             
-            // 5. Listener per al botó de simulació
+            // 4. Listener per al botó de simulació
             toggleOrientationBtn.addEventListener('click', toggleOrientationSimulation);
             toggleOrientationBtn.title = 'Passar a Horitzontal'; 
 
-            // 6. Comprovar l'orientació real inicial
+            // 5. Comprovar l'orientació real inicial
             if (window.innerWidth >= 1024) { 
                 toggleOrientationSimulation();
             }
