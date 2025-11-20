@@ -148,14 +148,6 @@
             pointer-events: none; /* Permet veure el centre de sota si calgués */
         }
 
-        /* Classes per als bloquejadors de text */
-        .blocker {
-            position: absolute;
-            background-color: transparent; /* Invisible */
-            z-index: 30; /* Per sobre de l'iframe */
-            /* border: 1px solid red; /* Descomentar per depurar posicions */ 
-        }
-        
         /* ========================================================== */
         /* ANIMACIÓ RAINBOW PER AL BOTÓ NOU HIT                       */
         /* ========================================================== */
@@ -190,7 +182,7 @@
             <!-- CONTENIDOR DE BOTONS ESQUERRA (Buit per al centratge) -->
             <div class="flex-grow flex justify-start items-center space-x-2">
                 <!-- Botó d'Informació (i) - NOU -->
-                <a href="https://xaviuab.github.io/Hitster_Digital/instruccions.html" target="_blank">
+                <a href="instruccions_bingo.html" target="_blank">
                     <button class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md" title="Instruccions del Joc (s'obre en una pestanya nova)">
                         i
                     </button>
@@ -273,6 +265,20 @@
                     <!-- LLISTA/ESTAT DELS FITXERS CARREGATS -->
                     <div id="file-list" class="text-xs text-gray-400 mt-2 text-center min-h-[1.5rem]"></div>
                 </div>
+
+                <!-- SECCIÓ HISTORIAL -->
+                <div id="history-section" class="mt-8 border-t border-gray-700 pt-4 w-full hidden">
+                    <div class="flex justify-between items-center mb-2 cursor-pointer hover:text-white transition-colors" id="toggle-history-btn">
+                        <h3 class="text-sm font-bold text-gray-300">📜 Historial de la sessió</h3>
+                        <span id="history-arrow" class="text-gray-400 transition-transform duration-200">▼</span>
+                    </div>
+                    <div id="history-list-container" class="hidden max-h-60 overflow-y-auto bg-gray-900/50 rounded-lg p-2 border border-gray-700">
+                        <ul id="history-list" class="space-y-2 text-xs">
+                            <!-- Items de l'historial s'injectaran aquí -->
+                        </ul>
+                    </div>
+                </div>
+
             </div> <!-- Fi info-and-setup -->
         </div> <!-- Fi game-content-container -->
 
@@ -293,6 +299,13 @@
         const fileList = document.getElementById('file-list');
         const uploadSection = document.getElementById('upload-section'); 
         const appTitle = document.getElementById('app-title'); 
+        
+        // Historial DOM
+        const historySection = document.getElementById('history-section');
+        const toggleHistoryBtn = document.getElementById('toggle-history-btn');
+        const historyListContainer = document.getElementById('history-list-container');
+        const historyList = document.getElementById('history-list');
+        const historyArrow = document.getElementById('history-arrow');
 
         // REFERÈNCIES PER A RESPONSIVE
         const mainCard = document.getElementById('main-card');
@@ -333,6 +346,7 @@
         let isSimulatedLandscape = false;
         let currentBingoResult = null; 
         let currentLevel = 'novell'; 
+        let sessionHistory = []; // Array per guardar l'historial
         
         // --- Variables per al compte enrere i control ---
         let countdownInterval = null;
@@ -379,6 +393,67 @@
             } catch (e) {
                 console.warn("Audio error:", e);
             }
+        }
+
+        // So de "clic" de la ruleta
+        function playRouletteClick() {
+            try {
+                initAudio();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                // So curt i percussiu
+                oscillator.type = 'square'; // Canviat a square per ser més audible
+                // Baixada ràpida de to per fer "clac"
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                // VOLUM AUGMENTAT A 0.4
+                gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+
+                // Animació de la fletxa (NOMÉS IMPULS, SENSE RETORN SUAU)
+                const arrow = document.querySelector('.roulette-arrow');
+                if (arrow) {
+                    arrow.animate([
+                        { transform: 'translateX(-50%) rotate(0deg)' },
+                        { transform: 'translateX(-50%) rotate(-25deg)' } // Moviment més pronunciat
+                    ], {
+                        duration: 60, // Molt ràpid
+                        easing: 'ease-out',
+                        fill: 'none' 
+                    });
+                }
+
+            } catch (e) {
+                // Ignorar
+            }
+        }
+
+        // Programa els clics de la ruleta
+        function scheduleRouletteSounds() {
+            let time = 0;
+            let delay = 50; 
+            
+            function nextClick() {
+                // MODIFICAT: Aturar abans dels 3000ms per evitar moviment final
+                if (time >= 2500) return; 
+                
+                setTimeout(() => {
+                    playRouletteClick();
+                    nextClick();
+                }, delay);
+                
+                time += delay;
+                delay *= 1.15; // Desacceleració exponencial
+            }
+            nextClick();
         }
 
         function getCleanCategoryName(filename) {
@@ -488,7 +563,7 @@
         function showButtonError(message) {
             nouHitButton.textContent = message;
             nouHitButton.classList.remove('bg-green-500', 'hover:bg-green-600', 'text-gray-900');
-            nouHitButton.classList.remove('btn-rainbow-active'); // Remove animation on error
+            nouHitButton.classList.remove('btn-rainbow-active'); 
 
             nouHitButton.classList.add('bg-red-600', 'hover:bg-red-700', 'text-white');
             clearTimeout(errorTimeout);
@@ -506,7 +581,7 @@
                         nouHitButton.disabled = true;
                     }
                 } else {
-                    // Game running, if error cleared, re-enable rainbow if waiting for click
+                    // Restaurar rainbow si estem jugant
                     nouHitButton.disabled = false;
                     if (availableTracks.length > 0) {
                          nouHitButton.classList.add('btn-rainbow-active');
@@ -522,9 +597,8 @@
             const canPlay = spotifyAccountType && anyChecked;
             
             nouHitButton.disabled = !canPlay;
-
+            
             if (canPlay) {
-                // Apply rainbow animation when ready
                 nouHitButton.classList.add('btn-rainbow-active');
                 nouHitButton.classList.remove('bg-gray-300', 'hover:bg-gray-400');
             } else {
@@ -555,6 +629,41 @@
                 }
             });
             updateButtonState();
+        }
+
+        // --- HISTORIAL DE CANÇONS ---
+        function addToHistory(track) {
+            sessionHistory.unshift(track); 
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (sessionHistory.length > 0) {
+                historySection.classList.remove('hidden');
+                historyList.innerHTML = ''; // Neteja llista
+                
+                sessionHistory.forEach((t, index) => {
+                    const hitNumber = sessionHistory.length - index;
+                    const trackId = t.uri.split(':').pop();
+                    const spotifyLink = `https://open.spotify.com/track/${trackId}`;
+                    
+                    const li = document.createElement('li');
+                    li.className = "bg-gray-800/50 hover:bg-gray-700 p-2 rounded flex items-center justify-between group transition-colors";
+                    li.innerHTML = `
+                        <a href="${spotifyLink}" target="_blank" class="flex-grow flex items-center gap-3 text-decoration-none">
+                            <span class="text-green-400 font-bold text-lg w-6 text-center">#${hitNumber}</span>
+                            <div class="flex flex-col">
+                                <span class="text-white font-bold text-sm group-hover:text-green-300 transition-colors">${t.title}</span>
+                                <span class="text-gray-400 text-xs">${t.artist} • ${t.year}</span>
+                            </div>
+                        </a>
+                        <a href="${spotifyLink}" target="_blank" class="text-gray-500 hover:text-green-400 ml-2" title="Obrir a Spotify">
+                            🔗
+                        </a>
+                    `;
+                    historyList.appendChild(li);
+                });
+            }
         }
 
         async function processFile(file) {
@@ -1081,6 +1190,9 @@
         function renderAndSpinWheel() {
             // CORRECCIÓ: Marquem que la ruleta ja ha girat
             hasWheelSpun = true;
+            
+            // NOU: Disparar so de ruleta
+            scheduleRouletteSounds();
 
             const tasksToUse = currentLevel === 'expert' ? bingoTasksExpert : bingoTasksNovell;
             const taskIndex = Math.floor(Math.random() * tasksToUse.length);
@@ -1207,6 +1319,13 @@
         
         function handleMostrarInfoClick() {
             stopCountdown(); 
+            
+            // NOU: Afegir a l'historial
+            // CORRECCIÓ: Assegurar que la funció d'historial existeix abans de cridar-la
+            if (currentTrack) {
+                addToHistory(currentTrack);
+            }
+
             // En mostrar info, NO resetegem el color. 
             if (currentBingoResult) {
                 setGlobalColor(currentBingoResult.color);
@@ -1269,7 +1388,8 @@
                         extraInfoHTML = `<p class="text-xl font-black ${currentBingoResult.textColorClass} mt-1 uppercase">${decade}</p>`;
                     } else if (label.includes("anys amunt o avall")) {
                         const rangeText = calculateRangeText(trackYear, label);
-                        extraInfoHTML = `<p class="text-xl font-bold ${currentBingoResult.textColorClass} mt-1">${rangeText}</p>`;
+                        // MODIFICAT: Eliminat "Rang:", color de la categoria i mida més gran
+                        extraInfoHTML = `<p class="text-xl font-black ${currentBingoResult.textColorClass} mt-1">${rangeText}</p>`;
                     }
                 }
 
@@ -1367,6 +1487,16 @@
             fileInput.addEventListener('change', handleFileUpload);
             toggleOrientationBtn.addEventListener('click', toggleOrientationSimulation);
             toggleOrientationBtn.title = 'Passar a Horitzontal'; 
+            
+            // Historial listener
+            toggleHistoryBtn.addEventListener('click', () => {
+                historyListContainer.classList.toggle('hidden');
+                if (historyListContainer.classList.contains('hidden')) {
+                    historyArrow.style.transform = 'rotate(0deg)';
+                } else {
+                    historyArrow.style.transform = 'rotate(180deg)';
+                }
+            });
 
             if (window.innerWidth >= 1024) { 
                 toggleOrientationSimulation();
