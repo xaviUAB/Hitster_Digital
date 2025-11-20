@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instruccions - Hitster Music Bingo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+            color: #f3f4f6; /* gray-100 */
+        }
+        
+        /* Colors de les categories per utilitzar en classes */
+        .text-hitster-green { color: #4ade80; }
+        .bg-hitster-green { background-color: #4ade80; }
+        
+        .text-hitster-pink { color: #f472b6; }
+        .bg-hitster-pink { background-color: #f472b6; }
+        
+        .text-hitster-yellow { color: #facc15; }
+        .bg-hitster-yellow { background-color: #facc15; }
+        
+        .text-hitster-violet { color: #a78bfa; }
+        .bg-hitster-violet { background-color: #a78bfa; }
+        
+        .text-hitster-blue { color: #22d3ee; }
+        .bg-hitster-blue { background-color: #22d3ee; }
+
+        .card-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex justify-center items-start py-8 px-4">
+
+    <!-- Main Container -->
+    <div class="w-full max-w-3xl bg-gray-800 p-6 sm:p-10 rounded-xl card-shadow mb-10">
+        
+        <!-- Header -->
+        <header class="border-b border-gray-700 pb-6 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-yellow-400 to-pink-500">
+                Com jugar
+            </h1>
+            <a href="codi_Hitster_Digital.html" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2 text-sm">
+                <span>🎮</span> Tornar al Joc
+            </a>
+        </header>
+
+        <!-- 1. L'Objectiu -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+                <span class="bg-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">1</span>
+                L'Objectiu
+            </h2>
+            <p class="text-gray-300 leading-relaxed">
+                Hitster Music Bingo és un joc musical on has d'endevinar detalls sobre cançons basant-te en la categoria que marca la ruleta. L'objectiu és completar el teu cartó de Bingo (si en feu servir un de físic) o simplement encertar el màxim de cançons possibles.
+            </p>
+        </section>
+
+        <!-- 2. Configuració Inicial -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+                <span class="bg-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">2</span>
+                Configuració
+            </h2>
+            <ul class="space-y-3 text-gray-300">
+                <li class="flex items-start">
+                    <span class="text-green-400 mr-2">✓</span>
+                    <div>
+                        <strong class="text-white">Compte de Spotify:</strong> Necessites tenir l'app de Spotify oberta al dispositiu. Si tens compte <em>Premium</em>, la cançó sonarà des de l'inici. Si tens compte <em>Free</em>, sonarà una part aleatòria.
+                    </div>
+                </li>
+                <li class="flex items-start">
+                    <span class="text-green-400 mr-2">✓</span>
+                    <div>
+                        <strong class="text-white">Nivell de Dificultat:</strong> Tria entre <strong>Novell</strong> (preguntes més assequibles) o <strong>Expert</strong> (preguntes més precises). Això canviarà el que demana la ruleta.
+                    </div>
+                </li>
+                <li class="flex items-start">
+                    <span class="text-green-400 mr-2">✓</span>
+                    <div>
+                        <strong class="text-white">Categories Musicals:</strong> Selecciona quines llistes de cançons vols fer servir (ex: Èxits espanyols, Summer Party, etc.).
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 3. Dinàmica del Torn -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+                <span class="bg-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">3</span>
+                Dinàmica del Torn
+            </h2>
+            
+            <div class="space-y-6 border-l-2 border-gray-700 pl-6">
+                <div>
+                    <h3 class="text-lg font-bold text-green-400 mb-1">1. Girar la Ruleta</h3>
+                    <p class="text-gray-400 text-sm">Prem el botó <strong>"Nou Hit"</strong>. La ruleta girarà i seleccionarà un color/tasca a l'atzar.</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold text-yellow-400 mb-1">2. Escoltar i Pensar</h3>
+                    <p class="text-gray-400 text-sm">Fes clic al <strong>Play (▶)</strong> del reproductor. Tens <strong>25 segons</strong> per endevinar la resposta segons el que hagi demanat la ruleta.</p>
+                    <p class="text-xs text-gray-500 mt-1 italic">Atenció! Els últims 5 segons la pantalla parpellejarà en mode "disco" per avisar-te que el temps s'acaba.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-pink-400 mb-1">3. Resoldre</h3>
+                    <p class="text-gray-400 text-sm">Quan tinguis la resposta (o s'acabi el temps), prem <strong>"Mostrar Informació"</strong>. La pantalla et revelarà el Títol, Artista, Any i la resposta específica a la pregunta de la ruleta.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Les Categories de la Ruleta -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                <span class="bg-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">4</span>
+                Què demana cada color?
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                <!-- Verd -->
+                <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-[#4ade80]">
+                    <h4 class="font-bold text-hitster-green text-lg mb-2">VERD</h4>
+                    <p class="text-sm mb-1"><strong class="text-white">Novell:</strong> Grup o Solista?</p>
+                    <p class="text-sm text-gray-500"><strong class="text-gray-400">Expert:</strong> Títol exacte de la cançó.</p>
+                </div>
+
+                <!-- Rosa -->
+                <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-[#f472b6]">
+                    <h4 class="font-bold text-hitster-pink text-lg mb-2">ROSA</h4>
+                    <p class="text-sm mb-1"><strong class="text-white">Novell:</strong> Anterior al 2000? (Sí/No)</p>
+                    <p class="text-sm text-gray-500"><strong class="text-gray-400">Expert:</strong> Any exacte de publicació.</p>
+                </div>
+
+                <!-- Groc -->
+                <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-[#facc15]">
+                    <h4 class="font-bold text-hitster-yellow text-lg mb-2">GROC</h4>
+                    <p class="text-sm mb-1"><strong class="text-white">Novell:</strong> Any exacte (marge +/- 4 anys).</p>
+                    <p class="text-sm text-gray-500"><strong class="text-gray-400">Expert:</strong> Nom del Grup o Solista.</p>
+                </div>
+
+                <!-- Violeta -->
+                <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-[#a78bfa]">
+                    <h4 class="font-bold text-hitster-violet text-lg mb-2">VIOLETA</h4>
+                    <p class="text-sm mb-1"><strong class="text-white">Novell:</strong> Dècada (ex: els 80, els 90...).</p>
+                    <p class="text-sm text-gray-500"><strong class="text-gray-400">Expert:</strong> Dècada.</p>
+                </div>
+
+                <!-- Blau -->
+                <div class="bg-gray-900 p-4 rounded-lg border-l-4 border-[#22d3ee] sm:col-span-2">
+                    <h4 class="font-bold text-hitster-blue text-lg mb-2">BLAU CEL</h4>
+                    <p class="text-sm mb-1"><strong class="text-white">Novell:</strong> Any exacte (marge +/- 2 anys).</p>
+                    <p class="text-sm text-gray-500"><strong class="text-gray-400">Expert:</strong> Any exacte (marge +/- 3 anys).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Crear els teus propis CSV -->
+        <section class="pt-8 border-t border-gray-700">
+            <h2 class="text-2xl font-bold text-white mb-4">
+                🛠️ Com crear les teves llistes (CSV)
+            </h2>
+            <p class="text-gray-300 text-sm mb-4">
+                Pots jugar amb les teves pròpies llistes de Spotify creant un fitxer de text amb format <strong>.csv</strong> o <strong>.txt</strong>.
+            </p>
+
+            <div class="bg-gray-900 rounded-lg p-6 mb-6">
+                <h3 class="text-white font-bold mb-2">Format del fitxer:</h3>
+                <p class="text-gray-400 text-xs mb-4">
+                    El fitxer ha de tenir separadors de punt i coma (<code>;</code>). La primera línia s'ignora si conté capçaleres.
+                </p>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs text-gray-500 uppercase bg-gray-800">
+                            <tr>
+                                <th class="px-2 py-2">Columna 1</th>
+                                <th class="px-2 py-2">Columna 2</th>
+                                <th class="px-2 py-2">Columna 3</th>
+                                <th class="px-2 py-2">Columna 4</th>
+                                <th class="px-2 py-2">Columna 5 (Opcional)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-700">
+                                <td class="px-2 py-2 font-mono text-green-400">URI de Spotify</td>
+                                <td class="px-2 py-2">Títol Cançó</td>
+                                <td class="px-2 py-2">Artista</td>
+                                <td class="px-2 py-2">Any</td>
+                                <td class="px-2 py-2">Info Extra</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-black rounded-lg p-4 border border-gray-700 relative mb-6">
+                <div class="absolute top-2 right-2 text-xs text-gray-500">Exemple de codi .txt</div>
+                <pre class="text-xs sm:text-sm text-gray-300 font-mono overflow-x-auto">
+Spotify URI;Track Name;Artist Name;Year;Extra Info
+spotify:track:4u7EnebtmKWzUu2loyussW;Redemption Song;Bob Marley & The Wailers;1980;Versió Acústica
+spotify:track:11dFghVXANMlKmJXsNCbNl;Bohemian Rhapsody;Queen;1975;
+spotify:track:5b88tNINg4Q4nrRbrCXUmg;Space Oddity;David Bowie;1969;</pre>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-white font-bold">Consells:</h3>
+                <ul class="list-disc list-inside text-gray-400 text-sm space-y-1">
+                    <li><strong>URI de Spotify:</strong> Al programa d'escriptori de Spotify, fes clic dret a una cançó -> <em>Comparteix</em> -> prem la tecla <kbd class="bg-gray-700 px-1 rounded">Alt</kbd> (Windows) o <kbd class="bg-gray-700 px-1 rounded">Option</kbd> (Mac) -> <em>Copia l'URI de Spotify</em>.</li>
+                    <li><strong>Nom del fitxer:</strong> El nom que posis al fitxer (ex: <code>_Rock Classics.txt</code>) serà el nom de la categoria dins del joc.</li>
+                    <li><strong>Prioritat:</strong> Si comences el nom del fitxer amb un guió baix (<code>_</code>), apareixerà primer a la llista de selecció.</li>
+                    <li><strong>Columna 5:</strong> Si afegeixes text a la cinquena columna, apareixerà sota el títol quan es mostri la solució (útil per a dades curioses, versions o el nom de la pel·lícula o la sèria on sona la cançó).</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+
+</body>
+</html>
