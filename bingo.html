@@ -182,6 +182,7 @@
             <!-- CONTENIDOR DE BOTONS ESQUERRA (Buit per al centratge) -->
             <div class="flex-grow flex justify-start items-center space-x-2">
                 <!-- Botó d'Informació (i) - NOU -->
+                <!-- FIX: Enllaç correcte a instruccions_bingo.html -->
                 <a href="instruccions_bingo.html" target="_blank">
                     <button class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md" title="Instruccions del Joc (s'obre en una pestanya nova)">
                         i
@@ -218,6 +219,10 @@
                 <div id="spotify-player-container" 
                     class="relative rounded-lg overflow-hidden flex items-center justify-center bg-gray-800 w-full h-[160px] transition-colors duration-300">
                     <!-- Reproductor o missatge d'estat -->
+                </div>
+                <!-- AVIS DE MODE SAFE PER A MÒBILS -->
+                <div id="mobile-warning" class="hidden text-xs text-yellow-500 text-center mt-1">
+                    ⚠️ Mode mòbil: Inici segur al segon 0 (clips 30s)
                 </div>
 
                 <!-- CONTENIDOR DE BOTONS PRINCIPALS -->
@@ -299,6 +304,7 @@
         const fileList = document.getElementById('file-list');
         const uploadSection = document.getElementById('upload-section'); 
         const appTitle = document.getElementById('app-title'); 
+        const mobileWarning = document.getElementById('mobile-warning'); // NOU
         
         // Historial DOM
         const historySection = document.getElementById('history-section');
@@ -346,7 +352,7 @@
         let isSimulatedLandscape = false;
         let currentBingoResult = null; 
         let currentLevel = 'novell'; 
-        let sessionHistory = []; // Array per guardar l'historial
+        let sessionHistory = []; 
         
         // --- Variables per al compte enrere i control ---
         let countdownInterval = null;
@@ -357,6 +363,9 @@
         const DEFAULT_CARD_BG = '#1f2937'; 
         // MODIFICAT: Player bg per defecte a gray-800 (#1f2937)
         const DEFAULT_PLAYER_BG = '#1f2937'; 
+        
+        // Detecció de dispositiu mòbil (aproximada)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         // --- AUDIO CONTEXT ---
         let audioCtx = null;
@@ -403,8 +412,7 @@
                 const gainNode = audioCtx.createGain();
                 
                 // So curt i percussiu
-                oscillator.type = 'square'; // Canviat a square per ser més audible
-                // Baixada ràpida de to per fer "clac"
+                oscillator.type = 'square'; 
                 oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
                 oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
                 
@@ -442,7 +450,6 @@
             let delay = 50; 
             
             function nextClick() {
-                // MODIFICAT: Aturar abans dels 3000ms per evitar moviment final
                 if (time >= 2500) return; 
                 
                 setTimeout(() => {
@@ -451,7 +458,7 @@
                 }, delay);
                 
                 time += delay;
-                delay *= 1.15; // Desacceleració exponencial
+                delay *= 1.15; 
             }
             nextClick();
         }
@@ -513,30 +520,23 @@
         function calculateDecadeText(year) {
             const y = parseInt(year);
             if (isNaN(y)) return "";
-            // Formula: (Any - 1) / 10 -> part entera -> * 10.
-            // 1990 -> 1989 -> 198 -> 1980.
-            // 1991 -> 1990 -> 199 -> 1990.
             const decadeStart = Math.floor((y - 1) / 10) * 10;
             
             if (decadeStart < 2000) {
-                return `els ${decadeStart % 100}`; // "els 80", "els 90"
+                return `els ${decadeStart % 100}`; 
             } else {
-                return `${decadeStart}`; // "2000", "2010"
+                return `${decadeStart}`; 
             }
         }
 
         function calculateRangeText(yearStr, rangeText) {
              const year = parseInt(yearStr);
              if (isNaN(year)) return "";
-             
-             // Extreure número de la cadena "4 anys...", "2 anys..."
              const match = rangeText.match(/(\d+)/);
              if (!match) return "";
              const diff = parseInt(match[0]);
-             
              const start = year - diff;
              const end = year + diff;
-             
              let yearsList = [];
              for (let i = start; i <= end; i++) {
                  yearsList.push(i);
@@ -1134,7 +1134,16 @@
             const randomIndex = Math.floor(Math.random() * availableTracks.length);
             currentTrack = availableTracks[randomIndex];
             const trackId = currentTrack.uri.split(':').pop();
-            const startSeconds = spotifyAccountType === 'free' ? 0 : 60; 
+            
+            // MODIFICACIÓ: Protecció iOS per a Embeds (sempre a 0 si és mòbil per evitar error de 30s)
+            let startSeconds = spotifyAccountType === 'free' ? 0 : 60; 
+            if (isMobile && spotifyAccountType === 'premium') {
+                startSeconds = 0;
+                if (mobileWarning) mobileWarning.classList.remove('hidden');
+            } else {
+                if (mobileWarning) mobileWarning.classList.add('hidden');
+            }
+            
             // NOU: autoplay=0
             const urlToLoad = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&autoplay=0&t=${startSeconds}`;
             
