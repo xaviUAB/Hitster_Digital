@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cartró Hitster Music Bingo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Llibreria per al confeti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;700;900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #111827; /* gray-900 */
-            /* Centratge per pantalla */
+            background-color: #111827;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -20,64 +18,78 @@
             min-height: 100vh;
             margin: 0;
             padding: 20px;
-            touch-action: none; /* Evita scroll mentre es dibuixa */
+            touch-action: none; 
             transition: background-color 0.5s ease;
         }
 
-        /* Animació de victòria (fons canviant) */
         @keyframes rainbow-bg {
-            0% { background-color: #4ade80; }   /* Verd */
-            25% { background-color: #f472b6; }  /* Rosa */
-            50% { background-color: #facc15; }  /* Groc */
-            75% { background-color: #a78bfa; }  /* Violeta */
-            100% { background-color: #22d3ee; } /* Blau */
+            0% { background-color: #4ade80; }
+            25% { background-color: #f472b6; }
+            50% { background-color: #facc15; }
+            75% { background-color: #a78bfa; }
+            100% { background-color: #22d3ee; }
         }
-
-        .victory-mode {
-            animation: rainbow-bg 5s linear infinite alternate;
-        }
+        .victory-mode { animation: rainbow-bg 5s linear infinite alternate; }
         
-        /* Animació d'error (quan cliques color incorrecte) */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
         .error-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        .cell-error-shake {
             animation: shake 0.2s ease-in-out 2;
             box-shadow: inset 0 0 0 4px red !important;
+            z-index: 20;
         }
 
-        /* Estils específics per a la impressió */
+        @keyframes button-pulse {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.15); filter: brightness(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .btn-attention {
+            animation: button-pulse 1.5s infinite ease-in-out;
+        }
+
+        /* ANIMACIÓ DE FITXES GUANYADORES (ONADA LENTA) */
+        @keyframes winning-pulse {
+            0% { transform: scale(1); border-color: white; background-color: black; box-shadow: none; }
+            15% { transform: scale(1.4); border-color: #fcd34d; background-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.9); } /* Pop al 15% del temps */
+            30% { transform: scale(1); border-color: white; background-color: black; box-shadow: none; }
+            100% { transform: scale(1); border-color: white; background-color: black; box-shadow: none; } /* Pausa llarga */
+        }
+        
+        .winning-token {
+            animation-name: winning-pulse;
+            animation-duration: 4s; 
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+            z-index: 30 !important; 
+            background-color: black !important; 
+            opacity: 1 !important;
+            display: block !important;
+        }
+
         @media print {
-            body {
-                background-color: white;
-                print-color-adjust: exact;
-                -webkit-print-color-adjust: exact;
-            }
-            #controls-container, .trash-btn, #exit-btn, #exit-modal, footer {
-                display: none !important;
-            }
-            #bingo-card {
-                box-shadow: none !important;
-                transform: scale(1) !important;
-                margin-top: 0 !important;
-                margin-bottom: 0 !important;
-            }
-            .victory-mode {
-                animation: none !important;
-                background-color: white !important;
-            }
+            body { background-color: white; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            .no-print, #exit-btn, #exit-modal, #setup-layer, footer { display: none !important; }
+            #bingo-card { box-shadow: none !important; transform: scale(1) !important; margin: 0 !important; }
+            #card-footer { height: 150px !important; }
+            #game-layer { display: block !important; }
+            .trash-btn, .color-palette-container { display: none !important; }
+            .victory-mode { animation: none !important; background-color: white !important; }
+            .bingo-cell.dimmed { opacity: 1 !important; filter: none !important; }
         }
 
-        /* Graella del bingo */
         .bingo-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             grid-template-rows: repeat(5, 1fr);
             gap: 4px;
             background-color: black;
-            /* Vora superior i laterals de 4px, la inferior la posa el següent element */
             border: 4px solid black;
             border-bottom: none; 
             width: 100%;
@@ -94,13 +106,21 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+        
+        .bingo-cell.dimmed {
+            opacity: 0.5; 
+            filter: grayscale(0.3);
         }
 
-        /* Fitxa de marcatge (Token) */
         .bingo-token {
             width: 70%;
             height: 70%;
-            background-color: rgba(0, 0, 0, 0.5); /* Semitransparent inicialment */
+            background-color: rgba(0, 0, 0, 0.25);
             border: 3px solid rgba(255, 255, 255, 0.9);
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
@@ -114,11 +134,10 @@
             animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Estat bloquejat (després de 5s) */
         .bingo-cell.locked .bingo-token {
-            background-color: rgba(0, 0, 0, 0.85); /* Més fosc/solid */
-            border-color: #a1a1aa; /* Grisenc */
-            transform: scale(0.95); /* Lleugerament més petit */
+            background-color: rgba(0, 0, 0, 0.6); 
+            border-color: #a1a1aa; 
+            transform: scale(0.95);
         }
 
         @keyframes popIn {
@@ -126,20 +145,23 @@
             to { transform: scale(1); opacity: 1; }
         }
         
-        /* Estructura del cartró */
+        .delete-progress { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; opacity: 0; transform: rotate(-90deg); }
+        .delete-circle { fill: none; stroke: #ef4444; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 2s linear; }
+        .bingo-cell.deleting .delete-progress { opacity: 1; }
+        .bingo-cell.deleting .delete-circle { stroke-dashoffset: 0; }
+
         #bingo-card {
             width: 100%;
             max-width: 400px;
-            background-color: transparent; /* El fons el fan els fills */
+            background-color: transparent;
             padding: 0; 
             filter: drop-shadow(0 20px 13px rgba(0, 0, 0, 0.5));
             display: flex;
             flex-direction: column;
             position: relative;
-            margin-bottom: 1.5rem; /* Espai sota el cartró */
+            margin-bottom: 3rem;
         }
 
-        /* Franja de Títol/Categoria */
         #category-title-bar {
             transition: background-color 0.3s ease, color 0.3s ease;
             width: 100%;
@@ -155,118 +177,110 @@
             justify-content: center;
         }
 
-        /* Classe per a la vora negra del text */
-        .text-stroke {
-            -webkit-text-stroke: 1.2px black;
-            text-shadow: 2px 2px 0 #000;
-            letter-spacing: 1px;
-        }
+        .text-stroke { -webkit-text-stroke: 1.2px black; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
 
-        /* Àrea de Canvas (Dibuix) */
-        .input-area {
-            background-color: white;
+        #card-footer {
             width: 100%;
-            height: 180px; 
-            margin-top: 0;
+            height: 220px;
+            background-color: white;
             border: 4px solid black;
-            border-top: none; 
+            border-top: 4px solid black; 
             position: relative;
-            cursor: crosshair;
             overflow: hidden;
             border-bottom-left-radius: 4px;
             border-bottom-right-radius: 4px;
         }
 
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
+        #setup-layer {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            background-color: white;
+            z-index: 20;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow: hidden;
         }
 
-        /* Botó Paperera */
+        #game-layer {
+            position: absolute;
+            inset: 0;
+            display: none;
+            z-index: 10;
+            background-color: white;
+        }
+
+        canvas { width: 100%; height: 100%; display: block; cursor: crosshair; border-radius: 0 0 4px 4px; }
+
         .trash-btn {
             position: absolute;
-            bottom: 8px;
-            right: 8px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 2px solid #e5e7eb;
+            bottom: 10px;
+            right: 10px;
+            background-color: white;
+            border: 1px solid #e5e7eb;
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 16px;
             transition: all 0.2s;
-            z-index: 10;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 15;
         }
-        .trash-btn:hover {
-            background-color: #fee2e2;
-            border-color: #fca5a5;
-            transform: scale(1.1);
+        .trash-btn:hover { background-color: #fee2e2; border-color: #fca5a5; }
+
+        .color-palette-container {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            display: flex;
+            gap: 12px;
+            padding: 8px 16px;
+            justify-content: center;
+            z-index: 30;
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
         }
 
-        /* Botons de colors del joc */
         .color-btn {
-            width: 50px; 
-            height: 50px;
+            width: 45px; 
+            height: 45px;
             border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.2);
-            transition: transform 0.1s, box-shadow 0.1s;
+            border: 2px solid black;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
             cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .color-btn:active {
-            transform: scale(0.9);
-        }
+        .color-btn:active { transform: scale(0.9); }
         .color-btn.selected {
             border-color: white;
-            box-shadow: 0 0 15px rgba(255,255,255,0.8);
-            transform: scale(1.15);
-            z-index: 10;
+            transform: scale(1.75) !important; 
+            box-shadow: 0 0 0 2px black, 0 0 15px rgba(255,255,255,0.6); 
+            z-index: 40; 
         }
 
-        /* Botons de Nivell */
-        .level-btn {
-            @apply px-8 py-3 rounded-lg font-bold text-base transition-all duration-200 border border-gray-600;
-        }
-        .level-btn-inactive {
-            background-color: #374151; /* gray-700 */
-            color: #9ca3af; /* gray-400 */
-        }
-        .level-btn-active {
-            background-color: #22c55e; /* green-500 */
-            color: #111827; /* gray-900 */
-            border-color: white;
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
-            transform: scale(1.05);
-        }
-
-        /* Botó Sortir */
         #exit-btn {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            background-color: #ef4444;
-            color: white;
-            font-weight: bold;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
+            position: fixed; top: 1rem; right: 1rem;
+            background-color: #ef4444; color: white; font-weight: bold;
+            padding: 0.5rem 1rem; border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: background-color 0.2s;
-            z-index: 50;
-            display: none; /* Ocult inicialment */
+            transition: background-color 0.2s; z-index: 50; display: none; 
         }
-        #exit-btn:hover {
-            background-color: #dc2626;
-        }
+        #exit-btn:hover { background-color: #dc2626; }
 
     </style>
 </head>
 <body>
 
-    <!-- MODAL DE CONFIRMACIÓ PERSONALITZAT -->
     <div id="exit-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-600 max-w-sm w-full mx-4 text-center">
             <h3 class="text-xl font-bold text-white mb-2">Vols sortir?</h3>
@@ -282,142 +296,187 @@
         </div>
     </div>
 
-    <!-- Botó Sortir (Fix a dalt a la dreta) -->
-    <button id="exit-btn" onclick="showExitModal()">
-        ✕ Sortir
-    </button>
+    <button id="exit-btn" onclick="showExitModal()">✕ Sortir</button>
 
-    <!-- CARTRÓ DE BINGO (ARA A L'INICI) -->
     <div id="bingo-card">
-        
-        <!-- GRAELLA 5x5 -->
-        <div id="grid" class="bingo-grid">
-            <!-- Les caselles es generen via JS -->
-        </div>
-
-        <!-- TÍTOL CENTRAL (CANVIA DE COLOR) -->
+        <div id="grid" class="bingo-grid"></div>
         <div id="category-title-bar" class="bg-black text-white text-center font-black text-lg sm:text-xl tracking-wider py-2 uppercase select-none px-2 truncate w-full">
             Hitster Music Bingo
         </div>
-
-        <!-- ÀREA D'ESCRIPTURA (CANVAS) -->
-        <div class="input-area" id="canvas-container">
-            <canvas id="signature-pad"></canvas>
-            
-            <!-- Botó Paperera -->
-            <button class="trash-btn" onclick="clearCanvas()" title="Esborrar signatura">
-                🗑️
-            </button>
-        </div>
-    </div>
-
-    <!-- CONTENIDOR DE CONTROLS (SOTA EL CARTRÓ) -->
-    <div id="controls-container" class="w-full flex flex-col items-center">
-        
-        <!-- Controls Inicials -->
-        <div id="controls" class="flex flex-col items-center gap-6 w-full max-w-md">
-            
-            <!-- Botons d'Acció (Ara a dalt) -->
-            <div class="flex gap-4 w-full justify-center">
-                <button onclick="generateCard()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 border-2 border-blue-400">
-                    🔄 Regenerar
-                </button>
-                
-                <!-- Botó Jugar -->
-                <button id="btn-jugar" onclick="startGameMode()" disabled 
-                    class="bg-gray-600 text-gray-400 font-bold py-3 px-8 rounded-full shadow-lg transition transform cursor-not-allowed flex items-center gap-2 border-2 border-gray-500">
-                    <span>▶️</span> Jugar
-                </button>
-            </div>
-
-            <!-- Selecció de Nivell (Ara a sota) -->
-            <div class="w-full flex flex-col items-center gap-2">
-                <div class="bg-gray-800 p-4 rounded-xl flex gap-4 border border-gray-700 shadow-lg w-full justify-center">
-                    <button id="btn-novell" onclick="selectLevel('novell')" class="level-btn level-btn-inactive flex-1">
-                        Novell
+        <div id="card-footer">
+            <div id="setup-layer">
+                <div class="flex gap-4 w-full justify-center mb-2">
+                    <button onclick="generateCard()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-md transition transform hover:scale-105 border-2 border-green-800 flex items-center gap-2 justify-center text-sm">
+                        🔄 Regenerar
                     </button>
-                    <button id="btn-expert" onclick="selectLevel('expert')" class="level-btn level-btn-inactive flex-1">
-                        Expert
+                    <button id="btn-jugar" onclick="startGameMode()" disabled class="bg-gray-300 text-gray-500 font-bold py-2 px-6 rounded-full shadow-none border-2 border-gray-400 flex items-center gap-2 justify-center text-sm cursor-not-allowed">
+                        ▶️ Jugar
                     </button>
                 </div>
-                <p id="level-hint" class="text-sm text-gray-400 mt-1">Selecciona un nivell per començar</p>
+                <div class="w-full h-px bg-gray-200 my-1"></div>
+                <div class="flex flex-col items-center gap-2 w-full">
+                    <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">TRIA EL NIVELL</p>
+                    <div class="flex justify-center gap-6">
+                        <button id="btn-novell" onclick="selectLevel('novell')" 
+                            class="px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 border-2 border-gray-200 bg-white text-gray-400 hover:bg-gray-50">
+                            Novell
+                        </button>
+                        <button id="btn-expert" onclick="selectLevel('expert')" 
+                            class="px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 border-2 border-gray-200 bg-white text-gray-400 hover:bg-gray-50">
+                            Expert
+                        </button>
+                    </div>
+                </div>
+                <p id="level-hint" class="hidden"></p> 
+            </div>
+            <div id="game-layer">
+                <canvas id="signature-pad"></canvas>
+                <button class="trash-btn" onclick="clearCanvas()" title="Esborrar">🗑️</button>
+                <div class="color-palette-container no-print" id="color-palette"></div>
             </div>
         </div>
-
-        <!-- Controls de Joc (Ocults inicialment) -->
-        <div id="game-controls" class="hidden flex-col items-center gap-4 mt-0"> <!-- Margin top reduït a 0 -->
-            <!-- Només botons de colors, sense text -->
-            <div class="flex gap-4" id="color-palette">
-                <!-- Els botons es generen via JS -->
-            </div>
-        </div>
-
     </div>
 
-    <footer class="mt-12 text-gray-500 text-xs">
-        Una app de XRG
-    </footer>
+    <div id="game-controls" class="hidden flex-col items-center gap-2 w-full max-w-[400px]"></div>
+
+    <footer class="mt-8 text-gray-500 text-xs">Una app de XRG</footer>
 
     <script>
-        // Configuració de Categories per Nivell
         const CONFIG_NOVELL = [
-            { color: '#4ade80', name: 'Grup o Solista' },       // Verd
-            { color: '#f472b6', name: 'Anterior al 2000?' },    // Rosa
-            { color: '#facc15', name: '4 anys amunt o avall' }, // Groc
-            { color: '#a78bfa', name: 'Dècada' },               // Violeta
-            { color: '#22d3ee', name: '2 anys amunt o avall' }  // Blau
+            { color: '#4ade80', name: 'Grup o Solista' },
+            { color: '#f472b6', name: 'Anterior al 2000?' },
+            { color: '#facc15', name: '4 anys amunt o avall' },
+            { color: '#a78bfa', name: 'Dècada' },
+            { color: '#22d3ee', name: '2 anys amunt o avall' }
         ];
 
         const CONFIG_EXPERT = [
-            { color: '#4ade80', name: 'Títol de la cançó' },        // Verd
-            { color: '#f472b6', name: 'Any exacte' },               // Rosa
-            { color: '#facc15', name: 'Nom del grup o solista' },   // Groc
-            { color: '#a78bfa', name: 'Dècada' },                   // Violeta
-            { color: '#22d3ee', name: '3 anys amunt o avall' }      // Blau
+            { color: '#4ade80', name: 'Títol de la cançó' },
+            { color: '#f472b6', name: 'Any exacte' },
+            { color: '#facc15', name: 'Nom del grup o solista' },
+            { color: '#a78bfa', name: 'Dècada' },
+            { color: '#22d3ee', name: '3 anys amunt o avall' }
         ];
 
-        // Colors base
         const BASE_COLORS = ['#4ade80', '#f472b6', '#facc15', '#a78bfa', '#22d3ee'];
-
         const DEFAULT_TITLE = "HITSTER MUSIC BINGO";
         const DEFAULT_BG = "black";
         const DEFAULT_TEXT_COLOR = "white";
 
         let isGameMode = false;
         let activeCategoryIndex = null;
-        let selectedLevel = null; // 'novell' o 'expert'
-        let currentCategories = []; // S'omplirà segons el nivell
+        let selectedLevel = null; 
+        let currentCategories = []; 
         let bingoAchieved = false; 
+        let pressTimer;
+        let attentionInterval;
+        let audioCtx = null;
+        let victoryLoopInterval;
+        let confettiTimeout; // Canviat d'interval a timeout
 
-        // --- 0. Selecció de Nivell ---
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTokenSound() {
+            try {
+                if (!audioCtx) initAudio();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        // So de focs artificials
+        function playFireworkSound() {
+            try {
+                if (!audioCtx) initAudio();
+                const bufferSize = audioCtx.sampleRate * 1.5;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 4);
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 1000;
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start();
+            } catch(e) {}
+        }
+
+        function playVictorySound() {
+            try {
+                if (!audioCtx) initAudio();
+                const now = audioCtx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 659.25]; 
+                // Timings ajustats per coincidir amb l'animació de 4s (Pop al 15% -> 0.6s, 1.2s, 1.8s...)
+                const timings = [0, 0.6, 1.2, 1.8, 2.4, 3.0]; 
+                
+                notes.forEach((freq, i) => {
+                    if (i >= timings.length) return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    const startTime = now + timings[i];
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.4);
+                });
+            } catch(e) {}
+        }
+        
+        function playVictoryLoop() {
+            playVictorySound();
+        }
 
         function selectLevel(level) {
             selectedLevel = level;
-            updateLevelUI(level);
             
-            // Activar botó Jugar
-            const btnJugar = document.getElementById('btn-jugar');
-            btnJugar.disabled = false;
-            btnJugar.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed', 'border-gray-500');
-            btnJugar.classList.add('bg-green-500', 'hover:bg-green-600', 'text-gray-900', 'border-green-400');
-            
-            // Amagar missatge d'ajuda
-            document.getElementById('level-hint').classList.add('opacity-0');
-        }
-        
-        function updateLevelUI(level) {
-            // Botons inicials
             const btnNovell = document.getElementById('btn-novell');
             const btnExpert = document.getElementById('btn-expert');
             
-            btnNovell.className = 'level-btn level-btn-inactive flex-1';
-            btnExpert.className = 'level-btn level-btn-inactive flex-1';
+            const inactiveClass = "px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 border-2 border-gray-200 bg-white text-gray-400 hover:bg-gray-50";
+            const activeClass = "px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 border-2 border-green-700 bg-green-500 text-gray-900 shadow-md transform scale-105";
 
-            if (level === 'novell') btnNovell.className = 'level-btn level-btn-active flex-1';
-            else btnExpert.className = 'level-btn level-btn-active flex-1 bg-purple-500 hover:bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)]';
+            if (btnNovell && btnExpert) {
+                btnNovell.className = inactiveClass;
+                btnExpert.className = inactiveClass;
+                if (level === 'novell') btnNovell.className = activeClass;
+                else btnExpert.className = activeClass;
+            }
+
+            const btnJugar = document.getElementById('btn-jugar');
+            if (btnJugar) {
+                btnJugar.disabled = false;
+                btnJugar.className = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-md transition transform hover:scale-105 border-2 border-green-800 flex items-center gap-2 justify-center text-sm cursor-pointer";
+            }
         }
-        
-        // --- 1. Lògica del Bingo i Caselles ---
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -431,78 +490,37 @@
             const gridContainer = document.getElementById('grid');
             gridContainer.innerHTML = ''; 
             bingoAchieved = false;
-            document.body.classList.remove('victory-mode');
+            stopVictory();
 
             let cells = [];
             BASE_COLORS.forEach(color => {
-                for (let i = 0; i < 5; i++) {
-                    cells.push(color);
-                }
+                for (let i = 0; i < 5; i++) cells.push(color);
             });
-
             cells = shuffleArray(cells);
 
             cells.forEach((color, index) => {
                 const cellDiv = document.createElement('div');
                 cellDiv.className = 'bingo-cell';
-                // Guardem el color en hexadecimal normalitzat per comparar
                 cellDiv.dataset.color = color.toLowerCase(); 
                 cellDiv.style.backgroundColor = color;
-                cellDiv.dataset.index = index; // Guardar índex per comprovació
+                cellDiv.dataset.index = index;
                 
                 const token = document.createElement('div');
                 token.className = 'bingo-token';
                 cellDiv.appendChild(token);
 
-                // --- GESTIÓ DEL CLIC A LA CASELLA ---
-                cellDiv.addEventListener('click', () => {
-                    if (!isGameMode) return;
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("class", "delete-progress");
+                svg.setAttribute("viewBox", "0 0 100 100");
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("class", "delete-circle");
+                circle.setAttribute("cx", "50");
+                circle.setAttribute("cy", "50");
+                circle.setAttribute("r", "45");
+                svg.appendChild(circle);
+                cellDiv.appendChild(svg);
 
-                    // 1. Comprovar categoria activa
-                    if (activeCategoryIndex === null) {
-                         // Petit feedback visual negatiu al panell de colors
-                         const palette = document.getElementById('color-palette');
-                         palette.classList.add('animate-pulse');
-                         setTimeout(() => palette.classList.remove('animate-pulse'), 500);
-                         return;
-                    }
-                    
-                    const activeColor = currentCategories[activeCategoryIndex].color.toLowerCase();
-                    
-                    // 2. Comprovar coincidència de color
-                    if (cellDiv.dataset.color !== activeColor) {
-                        // Error visual
-                        cellDiv.classList.add('error-shake');
-                        setTimeout(() => cellDiv.classList.remove('error-shake'), 200);
-                        return;
-                    }
-
-                    // 3. Comprovar si està bloquejada
-                    if (cellDiv.classList.contains('locked')) return;
-
-                    // 4. Marcar / Desmarcar
-                    if (cellDiv.classList.contains('marked')) {
-                        // Desmarcar (si no està bloquejada)
-                        cellDiv.classList.remove('marked');
-                        // Netejar timeout si existia
-                        if (cellDiv.lockTimeout) {
-                            clearTimeout(cellDiv.lockTimeout);
-                            cellDiv.lockTimeout = null;
-                        }
-                    } else {
-                        // Marcar
-                        cellDiv.classList.add('marked');
-                        checkBingo();
-                        
-                        // Temporitzador de bloqueig (5s)
-                        cellDiv.lockTimeout = setTimeout(() => {
-                            if (cellDiv.classList.contains('marked')) {
-                                cellDiv.classList.add('locked');
-                            }
-                        }, 5000);
-                    }
-                });
-
+                addCellEvents(cellDiv);
                 gridContainer.appendChild(cellDiv);
             });
             
@@ -510,16 +528,79 @@
             clearCanvas();
         }
 
+        function addCellEvents(cell) {
+            cell.addEventListener('click', () => {
+                if (!isGameMode) return;
+                if (activeCategoryIndex === null) {
+                    const palette = document.getElementById('color-palette');
+                    document.querySelectorAll('.color-btn').forEach(btn => {
+                        btn.classList.remove('btn-attention');
+                        void btn.offsetWidth; 
+                        btn.classList.add('btn-attention');
+                    });
+                    return;
+                }
+                const activeColor = currentCategories[activeCategoryIndex].color.toLowerCase();
+                if (cell.dataset.color !== activeColor) {
+                    cell.classList.add('cell-error-shake');
+                    setTimeout(() => cell.classList.remove('cell-error-shake'), 200);
+                    return;
+                }
+                if (cell.classList.contains('locked')) return;
+
+                if (!cell.classList.contains('marked')) {
+                    cell.classList.add('marked', 'locked');
+                    playTokenSound(); 
+                    clearCanvas();
+                    resetTitleBar(); 
+                    checkBingo();
+                }
+            });
+
+            const startPress = () => {
+                if (!isGameMode || !cell.classList.contains('locked')) return;
+                cell.classList.add('deleting');
+                pressTimer = setTimeout(() => {
+                    cell.classList.remove('marked', 'locked', 'deleting');
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    checkBingo(); 
+                }, 2000);
+            };
+            const endPress = () => {
+                if (pressTimer) clearTimeout(pressTimer);
+                cell.classList.remove('deleting');
+            };
+
+            cell.addEventListener('mousedown', startPress);
+            cell.addEventListener('mouseup', endPress);
+            cell.addEventListener('mouseleave', endPress);
+            cell.addEventListener('touchstart', (e) => { startPress(); });
+            cell.addEventListener('touchend', (e) => { e.preventDefault(); endPress(); });
+        }
+
         function checkBingo() {
             const cells = document.querySelectorAll('.bingo-cell');
             const size = 5;
-            let hasBingo = false;
+            
+            cells.forEach(c => {
+                const t = c.querySelector('.bingo-token');
+                if(t) { t.classList.remove('winning-token'); t.style.animationDelay = ''; }
+            });
+
+            let winningIndices = new Map(); 
 
             const checkLine = (indices) => {
-                return indices.every(i => cells[i].classList.contains('marked'));
+                const isLine = indices.every(i => cells[i].classList.contains('marked'));
+                if (isLine) {
+                    indices.forEach((idx, order) => {
+                        if(!winningIndices.has(idx)) winningIndices.set(idx, order);
+                    });
+                }
+                return isLine;
             };
 
-            // Files, Columnes, Diagonals
+            let hasBingo = false;
+
             for (let i = 0; i < size; i++) {
                 const row = [], col = [];
                 for (let j = 0; j < size; j++) {
@@ -534,8 +615,22 @@
             if (checkLine(diag1)) hasBingo = true;
             if (checkLine(diag2)) hasBingo = true;
 
-            if (hasBingo && !bingoAchieved) {
-                triggerVictory();
+            if (hasBingo) {
+                winningIndices.forEach((order, idx) => {
+                    const token = cells[idx].querySelector('.bingo-token');
+                    if(token) {
+                        token.classList.add('winning-token');
+                        token.style.animationDelay = `${order * 0.5}s`; 
+                    }
+                });
+
+                if (!bingoAchieved) {
+                    triggerVictory();
+                }
+            } else {
+                if (bingoAchieved) {
+                    stopVictory();
+                }
             }
         }
 
@@ -543,22 +638,61 @@
             bingoAchieved = true;
             document.body.classList.add('victory-mode');
             
-            const duration = 3000;
-            const animationEnd = Date.now() + duration;
+            playVictoryLoop();
+            if (victoryLoopInterval) clearInterval(victoryLoopInterval);
+            victoryLoopInterval = setInterval(playVictoryLoop, 5000); 
+
+            // Confetti Random Loop
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
 
-            const randomInRange = (min, max) => Math.random() * (max - min) + min;
+            const launchConfetti = () => {
+                if (!bingoAchieved) return;
 
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-                const particleCount = 50 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-            }, 250);
+                playFireworkSound();
+
+                const particleCount = Math.floor(Math.random() * 50) + 50;
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: Math.random(), y: Math.random() - 0.2 } 
+                }));
+
+                const randomDelay = Math.random() * 1500 + 500; 
+                confettiTimeout = setTimeout(launchConfetti, randomDelay);
+            };
+
+            launchConfetti();
+        }
+        
+        function stopVictory() {
+            bingoAchieved = false;
+            document.body.classList.remove('victory-mode');
+            if (confettiTimeout) clearTimeout(confettiTimeout);
+            if (victoryLoopInterval) clearInterval(victoryLoopInterval);
         }
 
-        // --- UI Managers ---
+        function startCategoryAnimationLoop() {
+            if (attentionInterval) clearInterval(attentionInterval);
+            const buttons = document.querySelectorAll('.color-btn');
+            const pulseButtons = () => {
+                if (activeCategoryIndex === null) {
+                    buttons.forEach(btn => {
+                        if (!btn.classList.contains('btn-attention')) {
+                             btn.classList.add('btn-attention');
+                        }
+                    });
+                }
+            };
+            pulseButtons();
+            attentionInterval = setInterval(() => {
+                if (activeCategoryIndex === null) pulseButtons();
+            }, 3000);
+        }
+
+        function stopCategoryAnimationLoop() {
+            if (attentionInterval) clearInterval(attentionInterval);
+            const buttons = document.querySelectorAll('.color-btn');
+            buttons.forEach(btn => btn.classList.remove('btn-attention'));
+        }
 
         function resetTitleBar() {
             const titleBar = document.getElementById('category-title-bar');
@@ -568,113 +702,122 @@
             titleBar.classList.remove('text-stroke'); 
             activeCategoryIndex = null;
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+            
+            document.querySelectorAll('.bingo-cell').forEach(cell => {
+                cell.classList.remove('dimmed');
+            });
+            
+            startCategoryAnimationLoop();
         }
 
         function setCategory(index) {
-            const titleBar = document.getElementById('category-title-bar');
-            
             if (activeCategoryIndex === index) {
-                resetTitleBar();
+                clearCanvas();
                 return;
             }
+            stopCategoryAnimationLoop();
 
             const cat = currentCategories[index];
             activeCategoryIndex = index;
             
+            const activeColorHex = cat.color.toLowerCase();
+            document.querySelectorAll('.bingo-cell').forEach(cell => {
+                if (cell.dataset.color === activeColorHex) {
+                    cell.classList.remove('dimmed');
+                } else {
+                    cell.classList.add('dimmed');
+                }
+            });
+
+            const titleBar = document.getElementById('category-title-bar');
             titleBar.style.backgroundColor = cat.color;
             titleBar.style.color = 'white'; 
             titleBar.classList.add('text-stroke'); 
             titleBar.textContent = cat.name.toUpperCase();
-
             document.querySelectorAll('.color-btn').forEach((btn, idx) => {
                 if (idx === index) btn.classList.add('selected');
                 else btn.classList.remove('selected');
             });
-            
-            // Esborrar canvas en canviar categoria
             clearCanvas();
         }
 
-        // --- 2. Lògica de Mode Joc i Control ---
-
         function startGameMode() {
             if (!selectedLevel) return; 
-
             isGameMode = true;
             currentCategories = selectedLevel === 'novell' ? CONFIG_NOVELL : CONFIG_EXPERT;
             
-            document.getElementById('controls').classList.add('hidden');
-            document.getElementById('exit-btn').style.display = 'block'; // Mostrar botó sortir
+            document.getElementById('exit-btn').style.display = 'block';
             
-            const gameControls = document.getElementById('game-controls');
-            gameControls.classList.remove('hidden');
-            gameControls.classList.add('flex');
+            document.getElementById('setup-layer').style.display = 'none';
+            document.getElementById('game-layer').style.display = 'block';
 
             const palette = document.getElementById('color-palette');
             palette.innerHTML = '';
             currentCategories.forEach((cat, index) => {
                 const btn = document.createElement('div');
-                btn.className = 'color-btn shadow-lg';
+                btn.className = 'color-btn shadow-md';
                 btn.style.backgroundColor = cat.color;
                 btn.title = cat.name; 
                 btn.addEventListener('click', () => setCategory(index));
                 palette.appendChild(btn);
             });
             
-            // NO REGENERAR en Jugar, usar el cartró actual
             resetTitleBar();
-            clearCanvas();
+            initCanvas();
+            setTimeout(resizeCanvas, 50);
         }
         
-        function showExitModal() {
-            document.getElementById('exit-modal').classList.remove('hidden');
-        }
+        function showExitModal() { document.getElementById('exit-modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('exit-modal').classList.add('hidden'); }
         
-        function closeModal() {
-            document.getElementById('exit-modal').classList.add('hidden');
-        }
-        
-        function confirmExit() {
-            // Ara fem servir el modal, no window.confirm
-            showExitModal();
-        }
-
         function resetGame() {
             closeModal();
+            stopCategoryAnimationLoop();
+            stopVictory();
             isGameMode = false;
-            bingoAchieved = false;
-            document.body.classList.remove('victory-mode');
             
-            // Netejar cel·les
-            const cells = document.querySelectorAll('.bingo-cell');
-            cells.forEach(cell => {
-                cell.classList.remove('marked', 'locked', 'winner');
-                if (cell.lockTimeout) clearTimeout(cell.lockTimeout);
+            document.querySelectorAll('.bingo-cell').forEach(cell => {
+                cell.classList.remove('marked', 'locked', 'deleting', 'dimmed');
+                const token = cell.querySelector('.bingo-token');
+                if(token) {
+                    token.classList.remove('winning-token');
+                    token.style.animationDelay = '';
+                }
             });
             
-            document.getElementById('controls').classList.remove('hidden');
             document.getElementById('game-controls').classList.add('hidden');
             document.getElementById('game-controls').classList.remove('flex');
             document.getElementById('exit-btn').style.display = 'none';
             
+            document.getElementById('setup-layer').style.display = 'flex';
+            document.getElementById('game-layer').style.display = 'none';
+            
             resetTitleBar();
             clearCanvas();
         }
 
-        // --- 3. Lògica del Canvas (Dibuix) ---
+        let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0;
 
-        const canvas = document.getElementById('signature-pad');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
+        function initCanvas() {
+            canvas = document.getElementById('signature-pad');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
+            
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+        }
 
         function resizeCanvas() {
             const container = document.getElementById('canvas-container');
-            if (canvas.width !== container.offsetWidth || canvas.height !== container.offsetHeight) {
-                canvas.width = container.offsetWidth;
-                canvas.height = container.offsetHeight;
-                
+            if (!container || !canvas) return;
+            if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
                 ctx.strokeStyle = "#000";
                 ctx.lineWidth = 3;
                 ctx.lineCap = "round";
@@ -684,6 +827,8 @@
 
         function getCoordinates(e) {
             const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
             let clientX, clientY;
             if (e.type.startsWith('touch')) {
                 clientX = e.touches[0].clientX;
@@ -692,7 +837,7 @@
                 clientX = e.clientX;
                 clientY = e.clientY;
             }
-            return { x: clientX - rect.left, y: clientY - rect.top };
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
         }
 
         function startDrawing(e) {
@@ -714,30 +859,22 @@
             lastY = coords.y;
         }
 
-        function stopDrawing() {
-            isDrawing = false;
-        }
-        
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        function stopDrawing() { isDrawing = false; }
+        function clearCanvas() { if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseout', stopDrawing);
-
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
-
-        // --- Inicialització ---
+        let audioInitialized = false;
+        document.addEventListener('click', () => {
+            if (!audioInitialized) {
+                initAudio();
+                audioInitialized = true;
+            }
+        }, { once: true });
 
         document.addEventListener('DOMContentLoaded', () => {
             generateCard();
-            setTimeout(resizeCanvas, 100);
+            initCanvas();
+            setTimeout(resizeCanvas, 200);
         });
-
         window.addEventListener('resize', resizeCanvas);
 
     </script>
