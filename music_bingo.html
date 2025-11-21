@@ -31,6 +31,8 @@
             max-width: 1024px; /* max-w-4xl - Límit elegant per a la visualització vertical en escriptori */
             margin: 0 auto; /* Centratge addicional per seguretat */
             transition: background-color 0.2s ease;
+            /* Afegit per focus */
+            outline: none;
         }
 
         /* ========================================================== */
@@ -182,12 +184,17 @@
             
             <!-- CONTENIDOR DE BOTONS ESQUERRA (Buit per al centratge) -->
             <div class="flex-grow flex justify-start items-center space-x-2">
-                <!-- Botó d'Informació (i) - NOU -->
+                <!-- Botó d'Informació (i) -->
                 <a href="instruccions_bingo.html" target="_blank">
-                    <button class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md" title="Instruccions del Joc (s'obre en una pestanya nova)">
+                    <button class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md" title="Instruccions del Joc">
                         i
                     </button>
                 </a>
+                
+                <!-- NOU: Botó Genera un cartró (QR) -->
+                <button id="qr-modal-btn" class="w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md" title="Genera un cartró">
+                    📱
+                </button>
             </div>
             
             <!-- TÍTOL CENTRAL (Flex-grow 0 per no expandir-se) -->
@@ -222,7 +229,7 @@
                 </div>
                 <!-- AVIS MÒBIL -->
                 <div id="mobile-warning" class="hidden text-xs text-yellow-500 text-center mt-1">
-                    ⚠️ Mode mòbil detectat: Inici al segon 0 (clips 30s)
+                    <!-- Text dinàmic via JS -->
                 </div>
 
                 <!-- CONTENIDOR DE BOTONS PRINCIPALS -->
@@ -292,6 +299,19 @@
         </footer>
     </div> <!-- Fi main-card -->
 
+    <!-- MODAL QR CARTRÓ (NOU) -->
+    <div id="qr-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div class="relative bg-white p-2 rounded-xl shadow-2xl max-w-sm w-full transform transition-transform duration-300 scale-90">
+            <!-- Botó Tancar -->
+            <button id="close-qr-modal" class="absolute -top-4 -right-4 bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold shadow-lg hover:bg-red-700 transition z-10 border-2 border-white">
+                ✕
+            </button>
+            <!-- Imatge -->
+            <img src="https://xaviuab.github.io/Hitster_Digital/imatges/qr_cartro.png" alt="QR Cartró" class="w-full h-auto rounded-lg border border-gray-200">
+            <p class="text-center text-gray-800 font-bold mt-3 mb-1">Escaneja per obtenir el teu cartró!</p>
+        </div>
+    </div>
+
     <script>
         // --- Referències a elements del DOM ---
         const playerContainer = document.getElementById('spotify-player-container');
@@ -306,6 +326,11 @@
         const appTitle = document.getElementById('app-title'); 
         const mobileWarning = document.getElementById('mobile-warning');
         
+        // Modal QR
+        const qrModalBtn = document.getElementById('qr-modal-btn');
+        const qrModal = document.getElementById('qr-modal');
+        const closeQrModalBtn = document.getElementById('close-qr-modal');
+
         // Historial DOM
         const historySection = document.getElementById('history-section');
         const toggleHistoryBtn = document.getElementById('toggle-history-btn');
@@ -365,7 +390,10 @@
         const DEFAULT_PLAYER_BG = '#1f2937'; 
         
         // Detecció de dispositiu mòbil (aproximada)
+        // isMobile general (inclou Android i iOS)
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        // isIOS específic (només dispositius Apple)
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
         // --- AUDIO CONTEXT ---
         let audioCtx = null;
@@ -412,7 +440,7 @@
                 const gainNode = audioCtx.createGain();
                 
                 // So curt i percussiu
-                oscillator.type = 'square'; // Canviat a square per ser més audible
+                oscillator.type = 'square'; 
                 // Baixada ràpida de to per fer "clac"
                 oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
                 oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
@@ -510,7 +538,7 @@
                             artist, 
                             year, 
                             category: finalCategory,
-                            extraInfo: extraInfo // NOU: Guardem la 5a columna
+                            extraInfo: extraInfo 
                         });
                     }
                 }
@@ -640,35 +668,64 @@
             updateButtonState();
         }
 
-        // --- HISTORIAL DE CANÇONS ---
-        function addToHistory(track) {
-            sessionHistory.unshift(track); 
+        // --- HISTORIAL DE CANÇONS (MODIFICAT) ---
+        function addToHistory(track, bingoResult, level) {
+            let answerText = "";
+            const year = parseInt(track.year);
+            const label = bingoResult.label;
+
+            if (label === "Anterior al 2000?") {
+                answerText = track.year; // MOSTRA L'ANY, NO SÍ/NO
+            } else if (label === "Dècada") {
+                answerText = calculateDecadeText(year);
+            } else if (label === "Títol de la cançó") {
+                answerText = track.title;
+            } else if (label === "Grup o solista" || label === "Nom del grup o solista") {
+                answerText = track.artist;
+            } else if (label === "Any exacte" || label.includes("anys amunt o avall")) {
+                answerText = track.year;
+            }
+
+            const historyItem = {
+                track: track,
+                color: bingoResult.color,
+                categoryLabel: label,
+                answer: answerText
+            };
+
+            sessionHistory.unshift(historyItem);
             renderHistory();
         }
 
         function renderHistory() {
             if (sessionHistory.length > 0) {
                 historySection.classList.remove('hidden');
-                historyList.innerHTML = ''; // Neteja llista
+                historyList.innerHTML = ''; 
                 
-                sessionHistory.forEach((t, index) => {
+                sessionHistory.forEach((item, index) => {
+                    const t = item.track;
                     const hitNumber = sessionHistory.length - index;
                     const trackId = t.uri.split(':').pop();
                     const spotifyLink = `https://open.spotify.com/track/${trackId}`;
                     
                     const li = document.createElement('li');
                     li.className = "bg-gray-800/50 hover:bg-gray-700 p-2 rounded flex items-center justify-between group transition-colors";
+                    
                     li.innerHTML = `
-                        <a href="${spotifyLink}" target="_blank" class="flex-grow flex items-center gap-3 text-decoration-none">
-                            <span class="text-green-400 font-bold text-lg w-6 text-center">#${hitNumber}</span>
-                            <div class="flex flex-col">
-                                <span class="text-white font-bold text-sm group-hover:text-green-300 transition-colors">${t.title}</span>
-                                <span class="text-gray-400 text-xs">${t.artist} • ${t.year}</span>
+                        <a href="${spotifyLink}" target="_blank" class="flex-grow flex items-center gap-3 text-decoration-none w-full overflow-hidden">
+                            <span class="text-gray-500 font-mono text-xs">#${hitNumber}</span>
+                            
+                            <!-- Boleta de Color -->
+                            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${item.color}; box-shadow: 0 0 5px ${item.color};"></span>
+                            
+                            <div class="flex flex-col overflow-hidden">
+                                <!-- Resposta Clau Destacada -->
+                                <span class="font-bold text-sm truncate" style="color: ${item.color}">${item.answer}</span>
+                                <!-- Info base de la cançó -->
+                                <span class="text-gray-400 text-[10px] truncate">${t.title} • ${t.artist}</span>
                             </div>
                         </a>
-                        <a href="${spotifyLink}" target="_blank" class="text-gray-500 hover:text-green-400 ml-2" title="Obrir a Spotify">
-                            🔗
-                        </a>
+                        <a href="${spotifyLink}" target="_blank" class="text-gray-500 hover:text-white ml-2" title="Obrir a Spotify">🔗</a>
                     `;
                     historyList.appendChild(li);
                 });
@@ -846,50 +903,50 @@
 
                 if (!spotifyAccountType) {
                     uploadSection.classList.add('hidden'); 
+                    // MODIFICAT: Lògica de botons de compte segons OS
+                    const premiumBtnClass = isIOS 
+                        ? "bg-gray-600 text-gray-400 cursor-not-allowed opacity-50"
+                        : "bg-green-500 hover:bg-green-600 text-gray-900 shadow-md";
+                    const premiumDisabled = isIOS ? "disabled" : "";
+                    const premiumText = isIOS 
+                        ? "Premium<br><span class='text-[10px] font-normal'>Accés no disponible en iOS</span>" 
+                        : "Premium<br><span class='text-[10px] font-normal'>Reproducció des del segon 30</span>";
+                    
+                    const freeText = "Gratuït<br><span class='text-[10px] font-normal'>Reproducció des de l'inici (o clip de mostra)</span>";
+
                     dynamicContentContainer.innerHTML = `
                         <div class="py-4 w-full px-4">
                             <p class="text-lg font-semibold mb-6">Tria el tipus de compte Spotify</p>
                             <div class="space-y-4">
-                                <button data-account="premium" class="account-choice w-full bg-green-500 hover:bg-green-600 text-gray-900 font-bold py-3 rounded-lg transition duration-150 shadow-md">
-                                    Premium
+                                <button data-account="premium" class="account-choice w-full font-bold py-3 rounded-lg transition duration-150 ${premiumBtnClass}" ${premiumDisabled}>
+                                    ${premiumText}
                                 </button>
                                 <button data-account="free" class="account-choice w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg transition duration-150 shadow-md">
-                                    Gratuït
+                                    ${freeText}
                                 </button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                     nouHitButton.disabled = true;
-
                     document.querySelectorAll('.account-choice').forEach(button => {
-                        button.addEventListener('click', (e) => {
-                            spotifyAccountType = e.target.getAttribute('data-account');
-                            selectedCategoriesOnLoad = []; 
-                            renderSetupSection(); 
-                        });
+                        if (!button.disabled) {
+                            button.addEventListener('click', (e) => {
+                                spotifyAccountType = e.currentTarget.getAttribute('data-account');
+                                selectedCategoriesOnLoad = []; 
+                                renderSetupSection(); 
+                            });
+                        }
                     });
                     return; 
                 }
-
                 uploadSection.classList.remove('hidden'); 
-
                 const categoryInfoMap = new Map(); 
-                loadedFileMetadata.forEach(meta => {
-                    if (!categoryInfoMap.has(meta.cleanName)) {
-                        categoryInfoMap.set(meta.cleanName, {
-                            cleanName: meta.cleanName,
-                            isPriority: meta.isPriority 
-                        });
-                    }
-                });
-
+                loadedFileMetadata.forEach(meta => { if (!categoryInfoMap.has(meta.cleanName)) categoryInfoMap.set(meta.cleanName, { cleanName: meta.cleanName, isPriority: meta.isPriority }); });
                 const allCategories = Array.from(categoryInfoMap.values());
                 allCategories.sort((a, b) => {
                     if (a.isPriority && !b.isPriority) return -1;
                     if (!a.isPriority && b.isPriority) return 1;
                     return a.cleanName.localeCompare(b.cleanName);
                 });
-                
                 let categoryCheckboxes = '';
                 allCategories.forEach(category => {
                     const cleanName = category.cleanName;
@@ -898,17 +955,12 @@
                     const isChecked = selectedCategoriesOnLoad.includes(cleanName);
                     const baseClasses = 'flex items-center cursor-pointer p-2 text-sm sm:text-base rounded-lg transition duration-150';
                     const displayCategory = `${cleanName} (${count} hits)`;
-
                     categoryCheckboxes += `
-                        <label class="category-label ${baseClasses}" 
-                                data-category="${cleanName}"
-                                data-priority="${isPriority}">
+                        <label class="category-label ${baseClasses}" data-category="${cleanName}" data-priority="${isPriority}">
                             <input type="checkbox" name="category" value="${cleanName}" class="form-checkbox focus:ring-current rounded" ${isChecked ? 'checked' : ''}>
                             <span class="ml-2">${displayCategory}</span>
-                        </label>
-                    `;
+                        </label>`;
                 });
-
                 const activeClassesStr = 'bg-green-500 text-gray-900 shadow-md';
                 const inactiveClassesStr = 'bg-gray-700 text-gray-300 hover:bg-gray-600';
                 const novellClass = currentLevel === 'novell' ? activeClassesStr : inactiveClassesStr;
@@ -918,31 +970,20 @@
                     <div class="py-4 w-full">
                         <p class="text-sm text-gray-400 text-center mb-2">Tria el nivell</p>
                         <div class="flex justify-center space-x-4 mb-6 px-4">
-                            <button id="level-novell-btn" class="flex-1 py-2 px-4 rounded-lg font-bold transition duration-200 ${novellClass}">
-                                Novell
-                            </button>
-                            <button id="level-expert-btn" class="flex-1 py-2 px-4 rounded-lg font-bold transition duration-200 ${expertClass}">
-                                Expert
-                            </button>
+                            <button id="level-novell-btn" class="flex-1 py-2 px-4 rounded-lg font-bold transition duration-200 ${novellClass}">Novell</button>
+                            <button id="level-expert-btn" class="flex-1 py-2 px-4 rounded-lg font-bold transition duration-200 ${expertClass}">Expert</button>
                         </div>
                         <hr class="border-gray-700 mb-6 mx-4" />
                         <p class="text-sm text-gray-400 text-center mb-4">Tria una o més categories</p>
                         <div class="flex justify-center space-x-3 mb-4 px-2 sm:px-4">
-                            <button id="select-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">
-                                Seleccionar totes
-                            </button>
-                            <button id="deselect-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">
-                                Deseleccionar totes
-                            </button>
+                            <button id="select-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">Seleccionar totes</button>
+                            <button id="deselect-all-btn" class="text-xs font-semibold text-white/80 hover:text-white transition duration-150 p-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 flex-1 shadow-inner">Deseleccionar totes</button>
                         </div>
-                        <div id="category-grid" class="grid grid-cols-2 gap-3 px-2 sm:px-4">
-                            ${categoryCheckboxes}
-                        </div>
-                    </div>
-                `;
+                        <div id="category-grid" class="grid grid-cols-2 gap-3 px-2 sm:px-4">${categoryCheckboxes}</div>
+                    </div>`;
                 
                 dynamicContentContainer.classList.add('opacity-100', 'scale-100');
-
+                
                 const updateLevelButtons = () => {
                      const novellBtn = document.getElementById('level-novell-btn');
                      const expertBtn = document.getElementById('level-expert-btn');
@@ -950,36 +991,20 @@
                      const inactiveClasses = ['bg-gray-700', 'text-gray-300', 'hover:bg-gray-600'];
                      novellBtn.classList.remove(...activeClasses, ...inactiveClasses);
                      expertBtn.classList.remove(...activeClasses, ...inactiveClasses);
-                     if (currentLevel === 'novell') {
-                         novellBtn.classList.add(...activeClasses);
-                         expertBtn.classList.add(...inactiveClasses);
-                     } else {
-                         expertBtn.classList.add(...activeClasses);
-                         novellBtn.classList.add(...inactiveClasses);
-                     }
+                     if (currentLevel === 'novell') { novellBtn.classList.add(...activeClasses); expertBtn.classList.add(...inactiveClasses); } 
+                     else { expertBtn.classList.add(...activeClasses); novellBtn.classList.add(...inactiveClasses); }
                 };
-
-                document.getElementById('level-novell-btn').addEventListener('click', () => {
-                    currentLevel = 'novell';
-                    updateLevelButtons();
-                });
-                document.getElementById('level-expert-btn').addEventListener('click', () => {
-                    currentLevel = 'expert';
-                    updateLevelButtons();
-                });
+                document.getElementById('level-novell-btn').addEventListener('click', () => { currentLevel = 'novell'; updateLevelButtons(); });
+                document.getElementById('level-expert-btn').addEventListener('click', () => { currentLevel = 'expert'; updateLevelButtons(); });
 
                 const labels = document.querySelectorAll('.category-label');
                 const selectAllBtn = document.getElementById('select-all-btn');
                 const deselectAllBtn = document.getElementById('deselect-all-btn');
                 if (selectAllBtn) selectAllBtn.addEventListener('click', selectAllCategories);
                 if (deselectAllBtn) deselectAllBtn.addEventListener('click', deselectAllCategories);
-
                 labels.forEach(label => {
                     updateCategoryStyle(label);
-                    label.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
-                        updateCategoryStyle(label);
-                        updateButtonState();
-                    });
+                    label.querySelector('input[type="checkbox"]').addEventListener('change', (e) => { updateCategoryStyle(label); updateButtonState(); });
                 });
                 updateButtonState(); 
             }, 300); 
@@ -987,76 +1012,39 @@
         
         function setGlobalColor(color) {
             const isDefault = (color === DEFAULT_BODY_BG);
-
-            // 1. Body (Fons General)
             document.body.style.backgroundColor = color;
-            
-            // 2. Main Card (Àrea Informació/Ruleta) - Sempre Base (reset a buit per usar classe CSS)
             document.getElementById('main-card').style.backgroundColor = '';
-            
-            // 3. Player Container (Àrea Reproductor) - Canvia color
             const player = document.getElementById('spotify-player-container');
-            if (player) {
-                 player.style.backgroundColor = isDefault ? '' : color;
-            }
-            
-            // 4. Mask (Tapa Reproductor) - Canvia color
+            if (player) player.style.backgroundColor = isDefault ? '' : color;
             const mask = document.getElementById('player-mask');
-            if (mask) {
-                mask.style.backgroundColor = isDefault ? '' : color;
-            }
+            if (mask) mask.style.backgroundColor = isDefault ? '' : color;
             
-            // 5. Buttons (Nou Hit / Mostrar Informació)
             const btns = [nouHitButton, mostrarInfoButton];
             btns.forEach(btn => {
                 if (btn) {
-                    if (isDefault) {
-                        btn.style.backgroundColor = '';
-                        btn.style.color = '';
-                    } else {
-                        btn.style.backgroundColor = color;
-                        btn.style.color = '#111827'; // Text fosc
-                    }
+                    if (isDefault) { btn.style.backgroundColor = ''; btn.style.color = ''; } 
+                    else { btn.style.backgroundColor = color; btn.style.color = '#111827'; }
                 }
             });
-
-            // 6. App Title Color
-            if (appTitle) {
-                appTitle.style.color = isDefault ? '' : color;
-            }
+            if (appTitle) appTitle.style.color = isDefault ? '' : color;
         }
 
-        // --- MODIFICAT: Aturar música recarregant l'iframe (sense eliminar-lo) ---
         function stopMusic() {
             const iframe = playerContainer.querySelector('iframe');
-            if (iframe) {
-                // Recarrega l'iframe per aturar la reproducció (actua com a pausa/reset)
-                // Assegurem que l'autoplay estigui desactivat en recarregar
-                const currentSrc = iframe.src;
-                // Simplement reassignant src es recarrega i s'atura l'àudio
-                iframe.src = currentSrc;
-            }
+            if (iframe) { const currentSrc = iframe.src; iframe.src = currentSrc; }
         }
 
         function stopCountdown() {
             if (countdownInterval) clearInterval(countdownInterval);
             if (rapidColorInterval) clearInterval(rapidColorInterval);
             if (iframeFocusInterval) clearInterval(iframeFocusInterval);
-            
-            countdownInterval = null;
-            rapidColorInterval = null;
-            iframeFocusInterval = null;
-            
-            // IMPORTANT: No resetegem el color aquí. El color ha de persistir.
+            countdownInterval = null; rapidColorInterval = null; iframeFocusInterval = null;
         }
 
         function startCountdown() {
-            // Assegurar neteja prèvia
             if (countdownInterval) clearInterval(countdownInterval);
             if (rapidColorInterval) clearInterval(rapidColorInterval);
-            
             initAudio();
-
             let timeLeft = 25;
             const countdownDisplay = document.getElementById('countdown-display');
             if (countdownDisplay) countdownDisplay.textContent = timeLeft;
@@ -1064,55 +1052,32 @@
             countdownInterval = setInterval(() => {
                 timeLeft--;
                 if (countdownDisplay) countdownDisplay.textContent = timeLeft;
-
                 if (timeLeft <= 5 && timeLeft > 0) {
-                    // INICI DE LA SEQÜÈNCIA RÀPIDA (Últims 5s)
                     playBeep(0.2, 880, 'square'); 
-                    
                     if (!rapidColorInterval) {
                         let colorIndex = 0;
-                        const discoColors = ['#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6']; // Groc, Verd, Blau, Lila, Rosa
-                        rapidColorInterval = setInterval(() => {
-                            setGlobalColor(discoColors[colorIndex]);
-                            colorIndex = (colorIndex + 1) % discoColors.length;
-                        }, 200);
+                        const discoColors = ['#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6']; 
+                        rapidColorInterval = setInterval(() => { setGlobalColor(discoColors[colorIndex]); colorIndex = (colorIndex + 1) % discoColors.length; }, 200);
                     }
                 } else if (timeLeft === 0) {
-                    // FINAL
                     playBeep(1.0, 440, 'square'); 
-                    stopMusic(); // ATURAR MÚSICA (ARA RECARREGA)
-                    
-                    // Aturar el compte enrere i l'interval disco
+                    stopMusic(); 
                     if (countdownInterval) clearInterval(countdownInterval);
                     if (rapidColorInterval) clearInterval(rapidColorInterval);
                     if (iframeFocusInterval) clearInterval(iframeFocusInterval);
-                    
-                    countdownInterval = null;
-                    rapidColorInterval = null;
-                    iframeFocusInterval = null;
-                    
-                    // IMPORTANT: En acabar el temps, deixem el color de la categoria, NO resetegem al fosc.
-                    // Però hem de treure l'efecte disco i tornar al color fix de la categoria actual
-                    if (currentBingoResult) {
-                        setGlobalColor(currentBingoResult.color);
-                    }
+                    countdownInterval = null; rapidColorInterval = null; iframeFocusInterval = null;
+                    if (currentBingoResult) setGlobalColor(currentBingoResult.color);
                 }
             }, 1000);
         }
 
-        // --- Monitor per detectar clic a l'iframe ---
         function startIframeFocusMonitor() {
             if (iframeFocusInterval) clearInterval(iframeFocusInterval);
-            // Treure focus actual per assegurar que detectem el canvi
             if (document.activeElement) document.activeElement.blur();
-
             iframeFocusInterval = setInterval(() => {
-                // Detectar si l'element actiu és l'iframe (indica clic de l'usuari)
                 if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
                     clearInterval(iframeFocusInterval);
                     iframeFocusInterval = null;
-                    
-                    // Usuari ha fet play -> Girar Ruleta
                     dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
                     renderAndSpinWheel();
                 }
@@ -1121,39 +1086,32 @@
 
         function resetGame() {
             stopCountdown();
-            // Força el reset del color al base només aquí o a nou hit
             setGlobalColor(DEFAULT_BODY_BG);
-            
-            categoriesLocked = false;
-            availableTracks = [];
-            currentTrack = null;
-            spotifyAccountType = null;
-            selectedCategoriesOnLoad = [];
-            currentLevel = 'novell'; 
+            categoriesLocked = false; availableTracks = []; currentTrack = null; spotifyAccountType = null;
+            selectedCategoriesOnLoad = []; currentLevel = 'novell'; 
             hideDynamicContent(); 
             setTimeout(renderSetupSection, 300);
         }
 
         function loadTrackAndPlayer() {
-            // CORRECCIÓ: Resetegem el flag de la ruleta per a la nova cançó
             hasWheelSpun = false;
-
             playerContainer.innerHTML = `<p class="text-gray-400 text-center p-4">Carregant reproductor...</p>`;
-
             const randomIndex = Math.floor(Math.random() * availableTracks.length);
             currentTrack = availableTracks[randomIndex];
             const trackId = currentTrack.uri.split(':').pop();
             
-            // MODIFICACIÓ: Protecció iOS per a Embeds (sempre a 0 si és mòbil per evitar error de 30s)
             let startSeconds = spotifyAccountType === 'free' ? 0 : 60; 
             if (isMobile && spotifyAccountType === 'premium') {
                 startSeconds = 0;
-                if (mobileWarning) mobileWarning.classList.remove('hidden');
+                if (mobileWarning) {
+                     mobileWarning.textContent = "⚠️ Sistema iOS detectat. Inici al segon 0";
+                     mobileWarning.classList.remove('hidden');
+                }
             } else {
                 if (mobileWarning) mobileWarning.classList.add('hidden');
             }
             
-            // NOU: autoplay=0
+            // MODIFICAT: autoplay=0 per defecte
             const urlToLoad = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&autoplay=0&t=${startSeconds}`;
             
             const iframe = document.createElement('iframe');
@@ -1166,8 +1124,6 @@
             iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
             iframe.loading = 'lazy';
             iframe.title = " "; 
-            
-            // ELIMINAT: Bloquejadors de text
 
             const mask = document.createElement('div');
             mask.id = 'player-mask';
@@ -1183,16 +1139,8 @@
             
             iframe.onload = () => {
                 nouHitButton.classList.add('hidden');
-                // CORRECCIÓ: No mostrar botó info immediatament
-                // mostrarInfoButton.classList.remove('hidden'); 
-                
-                // CORRECCIÓ: Només iniciem el monitor si la ruleta encara NO ha girat.
-                // Això evita que es torni a activar quan es recarrega l'iframe (stopMusic)
-                if (!hasWheelSpun) {
-                    startIframeFocusMonitor();
-                }
+                if (!hasWheelSpun) startIframeFocusMonitor();
             };
-            
             iframe.onerror = () => {
                 showButtonError("Error de càrrega.");
                 playerContainer.innerHTML = `<p class="text-gray-400 text-center p-4">Error de càrrega.</p>`;
@@ -1201,18 +1149,12 @@
                 nouHitButton.disabled = false; 
                 if (mask) mask.remove();
             };
-
             availableTracks.splice(randomIndex, 1);
         }
 
         function renderAndSpinWheel() {
-            // CORRECCIÓ: Marquem que la ruleta ja ha girat
             hasWheelSpun = true;
-            
-            // NOU: Disparar so de ruleta
             scheduleRouletteSounds();
-            
-            // MODIFICAT: FOCUS AL MAIN CARD PER A DRECERES DE TECLAT
             const mainCard = document.getElementById('main-card');
             if (mainCard) mainCard.focus();
 
@@ -1223,55 +1165,35 @@
             dynamicContentContainer.innerHTML = `
                 <div class="py-4 w-full flex flex-col items-center">
                     <div id="bingo-result-text" class="h-10 mb-4 flex items-center justify-center transition-all duration-500 opacity-0 transform scale-95"></div>
-
                     <div class="roulette-container mb-4">
                         <div class="roulette-arrow"></div>
                         <div class="roulette-wheel" id="wheel"></div>
                         <div class="roulette-center"></div>
                         <div id="countdown-display" class="text-7xl font-black text-white/20 transition-all duration-300">25</div>
                     </div>
-                </div>
-            `;
-
+                </div>`;
             const segmentCenter = (taskIndex * 72) + 36;
             const targetRotation = (360 - segmentCenter) + (360 * 5); 
-
             setTimeout(() => {
                 const wheel = document.getElementById('wheel');
-                if (wheel) {
-                    wheel.style.transform = `rotate(${targetRotation}deg)`;
-                }
-                
+                if (wheel) wheel.style.transform = `rotate(${targetRotation}deg)`;
                 setTimeout(() => {
                     const resultTextDiv = document.getElementById('bingo-result-text');
                     if (resultTextDiv) {
-                        resultTextDiv.innerHTML = `
-                            <span class="text-2xl font-extrabold uppercase tracking-wider ${currentBingoResult.textColorClass} drop-shadow-md text-center leading-tight">
-                                ${currentBingoResult.label}
-                            </span>
-                        `;
+                        resultTextDiv.innerHTML = `<span class="text-2xl font-extrabold uppercase tracking-wider ${currentBingoResult.textColorClass} drop-shadow-md text-center leading-tight">${currentBingoResult.label}</span>`;
                         resultTextDiv.classList.remove('opacity-0', 'scale-95');
                         resultTextDiv.classList.add('opacity-100', 'scale-100');
                     }
-                    
                     const countdownDisplay = document.getElementById('countdown-display');
                     if (countdownDisplay) {
                         countdownDisplay.classList.remove('text-white/20');
                         countdownDisplay.classList.add('text-white');
                         countdownDisplay.style.textShadow = "0 0 10px rgba(0,0,0,0.9)";
                     }
-                    
-                    // *** NOU: CANVIAR FONS AL COLOR DE LA CATEGORIA ***
                     setGlobalColor(currentBingoResult.color);
-                    
-                    // *** NOU: MOSTRAR BOTÓ INFORMACIÓ ***
                     mostrarInfoButton.classList.remove('hidden');
-                    
-                    // MODIFICAT: FOCUS AL MAIN CARD PER A DRECERES DE TECLAT
                     if (mainCard) mainCard.focus();
-
                     startCountdown();
-
                 }, 3000); 
             }, 100);
         }
@@ -1279,61 +1201,35 @@
         function handleNouHitClick() {
             if (nouHitButton.disabled) return;
             initAudio(); 
-            
-            // *** NOU: ASSEGURAR QUE TORNEM AL COLOR BASE ***
             setGlobalColor(DEFAULT_BODY_BG);
-
             if (!categoriesLocked) {
                 selectedCategoriesOnLoad = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(input => input.value);
-                if (selectedCategoriesOnLoad.length === 0) {
-                    showButtonError('Selecciona una categoria');
-                    return;
-                }
-                if (!spotifyAccountType) {
-                    showButtonError('Tria el tipus de compte Spotify');
-                    return;
-                }
-
+                if (selectedCategoriesOnLoad.length === 0) { showButtonError('Selecciona una categoria'); return; }
+                if (!spotifyAccountType) { showButtonError('Tria el tipus de compte Spotify'); return; }
                 availableTracks = allTracksFromFile.filter(track => selectedCategoriesOnLoad.includes(track.category));
-                if (availableTracks.length === 0) {
-                    showButtonError('No hi ha cançons en aquestes categories.');
-                    return;
-                }
-                
+                if (availableTracks.length === 0) { showButtonError('No hi ha cançons en aquestes categories.'); return; }
                 categoriesLocked = true;
                 uploadSection.classList.add('hidden');
                 hideDynamicContent(); 
                 nouHitButton.disabled = true; 
-                
                 setTimeout(() => {
                     dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
-                    // NOU: Esborrem contingut i mostrem instruccions
                     dynamicContentContainer.innerHTML = `<div class="text-center animate-pulse mt-4"><p class="text-xl font-bold text-green-400">Fes clic al Play (▶) per girar la ruleta!</p></div>`;
-                    
-                    // NOU: Només carreguem el player. La ruleta espera al focus.
                     loadTrackAndPlayer();
                 }, 300);
-
             } else {
                 stopCountdown();
-                // Reset color base també en nous hits successius
                 setGlobalColor(DEFAULT_BODY_BG);
-
                 if (availableTracks.length === 0) {
                     nouHitButton.disabled = true;
                     mostrarInfoButton.classList.add('hidden');
-                    playerContainer.innerHTML = `<p class="text-white font-bold text-center p-4 text-xl">
-                        💿 Ja no queden cançons per mostrar 🎸<br>
-                        <span class="text-sm text-gray-400">(Reiniciant en 5 segons)</span>
-                    </p>`;
+                    playerContainer.innerHTML = `<p class="text-white font-bold text-center p-4 text-xl">💿 Ja no queden cançons 🎸<br><span class="text-sm text-gray-400">(Reiniciant...)</span></p>`;
                     hideDynamicContent(); 
                     setTimeout(resetGame, 5000); 
                     return;
                 }
-                
                 nouHitButton.disabled = true;
                 hideDynamicContent(); 
-                
                 setTimeout(() => {
                     dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
                     dynamicContentContainer.innerHTML = `<div class="text-center animate-pulse mt-4"><p class="text-xl font-bold text-green-400">Fes clic al Play (▶) per girar la ruleta!</p></div>`;
@@ -1344,34 +1240,15 @@
         
         function handleMostrarInfoClick() {
             stopCountdown(); 
-            
-            // NOU: Afegir a l'historial
-            // CORRECCIÓ: Assegurar que la funció d'historial existeix abans de cridar-la
-            if (currentTrack) {
-                addToHistory(currentTrack);
-            }
-
-            // En mostrar info, NO resetegem el color. 
-            if (currentBingoResult) {
-                setGlobalColor(currentBingoResult.color);
-            }
-
-            if (!currentTrack) {
-                showButtonError("No hi ha cançó seleccionada.");
-                return;
-            }
+            if (currentTrack && currentBingoResult) addToHistory(currentTrack, currentBingoResult, currentLevel);
+            if (currentBingoResult) setGlobalColor(currentBingoResult.color);
+            if (!currentTrack) { showButtonError("No hi ha cançó."); return; }
             
             const mask = document.getElementById('player-mask');
-            // *** CORRECCIÓ REVERTIDA: ELIMINAR COMPLETAMENT LA MÀSCARA ***
-            if (mask) {
-                mask.remove();
-            }
+            if (mask) mask.remove();
             
-            // *** FIX: RESETEJAR EL FONS DEL CONTENIDOR DEL REPRODUCTOR A FOSC ***
             const player = document.getElementById('spotify-player-container');
-            if (player) {
-                player.style.backgroundColor = DEFAULT_PLAYER_BG;
-            }
+            if (player) player.style.backgroundColor = DEFAULT_PLAYER_BG;
             
             dynamicContentContainer.classList.add('opacity-0', 'scale-95');
             categoryContainer.classList.add('opacity-0', 'scale-95');
@@ -1387,57 +1264,39 @@
                 dynamicContentContainer.classList.remove('opacity-0', 'scale-95');
                 categoryContainer.classList.remove('opacity-0', 'scale-95');
                 
-                // --- NOVA LÒGICA PER DESTACAR LA INFORMACIÓ SEGONS LA CATEGORIA DEL BINGO ---
                 const label = currentBingoResult ? currentBingoResult.label : '';
-                // CONSTANT PER L'ESTIL "NO DESTACAT" UNIFICAT
-                // Text-sm, gris clar (text-gray-400)
                 const dimmedStyle = "text-sm font-bold text-gray-400 mt-1 mb-1";
-
-                let titleClass = "";
-                let artistClass = "";
-                let yearClass = "";
-                
-                // Variable per guardar la resposta extra
+                let titleClass = "", artistClass = "", yearClass = "";
                 let extraInfoHTML = "";
-
-                // Lògica per generar la resposta extra segons la categoria
                 const trackYear = parseInt(currentTrack.year);
+                
                 if (!isNaN(trackYear)) {
                     if (label === "Anterior al 2000?") {
                         const isBefore = trackYear < 2000 ? "SÍ" : "NO";
-                        // Modificat: Només SÍ/NO, gran i amb el color de la categoria
                         extraInfoHTML = `<p class="text-4xl font-black ${currentBingoResult.textColorClass} mt-2">${isBefore}</p>`;
                     } else if (label === "Dècada") {
                         const decade = calculateDecadeText(trackYear);
-                        // MODIFICAT: Eliminat "Dècada:", majúscules i color de la categoria
                         extraInfoHTML = `<p class="text-xl font-black ${currentBingoResult.textColorClass} mt-1 uppercase">${decade}</p>`;
                     } else if (label.includes("anys amunt o avall")) {
                         const rangeText = calculateRangeText(trackYear, label);
-                        // MODIFICAT: Eliminat "Rang:", color de la categoria i mida més gran
-                        extraInfoHTML = `<p class="text-xl font-black ${currentBingoResult.textColorClass} mt-1">${rangeText}</p>`;
+                        extraInfoHTML = `<p class="text-xl font-bold ${currentBingoResult.textColorClass} mt-1">${rangeText}</p>`;
                     }
                 }
 
                 if (label === "Títol de la cançó") {
-                    // CAS TÍTOL: Títol gran/verd
                     titleClass = "text-4xl font-extrabold text-green-400 leading-tight mb-2";
-                    artistClass = dimmedStyle;
-                    yearClass = dimmedStyle;
+                    artistClass = dimmedStyle; yearClass = dimmedStyle;
                 } else if (label === "Grup o solista" || label === "Nom del grup o solista") {
-                    // CAS ARTISTA: Artista gran/color categoria
                     titleClass = dimmedStyle;
                     const artistColor = currentBingoResult ? currentBingoResult.textColorClass : 'text-white';
                     artistClass = `text-4xl font-extrabold ${artistColor} mt-1 mb-4 leading-tight`;
                     yearClass = dimmedStyle;
                 } else {
-                    // CAS ANY: Any gran/color categoria
-                    titleClass = dimmedStyle;
-                    artistClass = dimmedStyle;
+                    titleClass = dimmedStyle; artistClass = dimmedStyle;
                     const yearColor = currentBingoResult ? currentBingoResult.textColorClass : 'text-green-400';
                     yearClass = `text-6xl font-extrabold ${yearColor} mb-2`;
                 }
                 
-                // NOU: Construcció del títol amb informació extra si existeix (5a columna)
                 let finalTitleHtml = currentTrack.title;
                 if (currentTrack.extraInfo && currentTrack.extraInfo.trim() !== "") {
                      finalTitleHtml += `<br><span class="text-[0.7em] opacity-90">${currentTrack.extraInfo}</span>`; 
@@ -1447,45 +1306,25 @@
                     <div class="py-4">
                         <p class="${titleClass}">${finalTitleHtml}</p>
                         <p class="${artistClass}">${currentTrack.artist}</p>
-                        <!-- MODIFICAT: Espai eliminat o molt petit -->
-                        <!-- <div class="h-4"></div> ELIMINAT -->
-                        
-                        <!-- MODIFICAT: Marge top augmentat per al contenidor de categoria (any o categoria) -->
                         <p class="${yearClass}">${currentTrack.year}</p>
-                        
                         ${currentBingoResult ? `
-                        <div class="mt-6 flex flex-col items-center justify-center"> <!-- MT-6 AUMENTAT -->
+                        <div class="mt-6 flex flex-col items-center justify-center">
                             <div class="flex items-center justify-center space-x-2">
                                 <span class="text-2xl">🎲</span>
-                                <p class="text-xl font-bold ${currentBingoResult.textColorClass} uppercase tracking-wide text-center leading-tight">
-                                    ${currentBingoResult.label}
-                                </p>
+                                <p class="text-xl font-bold ${currentBingoResult.textColorClass} uppercase tracking-wide text-center leading-tight">${currentBingoResult.label}</p>
                             </div>
                             ${extraInfoHTML}
                             ${currentLevel === 'expert' ? '<span class="text-xs text-gray-500 mt-2 uppercase tracking-widest">(Nivell Expert)</span>' : ''}
-                        </div>
-                        ` : ''}
-                    </div>
-                `;
+                        </div>` : ''}
+                    </div>`;
                 
-                const currentCategoryMeta = loadedFileMetadata.find(meta => meta.cleanName === currentCategory);
-                const isPriorityCategory = currentCategoryMeta ? currentCategoryMeta.isPriority : false;
-                const categoryColorClass = isPriorityCategory ? 'text-blue-400' : 'text-green-400';
-
-                categoryContainer.innerHTML = `
-                    <p class="text-xs text-gray-400 mb-2">
-                        Categoria: 
-                        <span class="font-medium ${categoryColorClass}">
-                            ${currentCategory} (${playedCount} de ${totalCount})
-                        </span>
-                    </p>
-                `;
+                const catMeta = loadedFileMetadata.find(m => m.cleanName === currentCategory);
+                const isPrio = catMeta ? catMeta.isPriority : false;
+                categoryContainer.innerHTML = `<p class="text-xs text-gray-400 mb-2">Categoria: <span class="font-medium ${isPrio ? 'text-blue-400' : 'text-green-400'}">${currentCategory} (${playedCount} de ${totalCount})</span></p>`;
                 
                 mostrarInfoButton.classList.add('hidden');
                 nouHitButton.classList.remove('hidden');
-                
                 nouHitButton.disabled = false;
-
             }, 300);
         }
         
@@ -1505,7 +1344,6 @@
         async function initialize() {
             await fetchRemoteCsvs(); 
             renderSetupSection();
-
             nouHitButton.addEventListener('click', handleNouHitClick);
             mostrarInfoButton.addEventListener('click', handleMostrarInfoClick);
             uploadButton.addEventListener('click', () => fileInput.click());
@@ -1513,39 +1351,46 @@
             toggleOrientationBtn.addEventListener('click', toggleOrientationSimulation);
             toggleOrientationBtn.title = 'Passar a Horitzontal'; 
             
-            // Historial listener
+            // Modal QR
+            const qrModal = document.getElementById('qr-modal');
+            const qrBtn = document.getElementById('qr-modal-btn');
+            const closeQr = document.getElementById('close-qr-modal');
+
+            if (qrBtn) {
+                qrBtn.addEventListener('click', () => {
+                    qrModal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                });
+            }
+            if (closeQr) {
+                closeQr.addEventListener('click', () => {
+                    qrModal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+                });
+            }
+            // Close modal on background click
+            qrModal.addEventListener('click', (e) => {
+                if (e.target === qrModal) {
+                    qrModal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+                }
+            });
+
             toggleHistoryBtn.addEventListener('click', () => {
                 historyListContainer.classList.toggle('hidden');
-                if (historyListContainer.classList.contains('hidden')) {
-                    historyArrow.style.transform = 'rotate(0deg)';
-                } else {
-                    historyArrow.style.transform = 'rotate(180deg)';
-                }
+                if (historyListContainer.classList.contains('hidden')) historyArrow.style.transform = 'rotate(0deg)';
+                else historyArrow.style.transform = 'rotate(180deg)';
             });
-
-            // Keyboard Shortcuts
             document.addEventListener('keydown', (event) => {
-                // Evitar conflictes si hi hagués inputs de text
                 if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
-
                 if (event.key.toLowerCase() === 'n') {
-                    if (!nouHitButton.classList.contains('hidden') && !nouHitButton.disabled) {
-                        nouHitButton.click();
-                    }
+                    if (!nouHitButton.classList.contains('hidden') && !nouHitButton.disabled) nouHitButton.click();
                 }
-                
                 if (event.key === 'Enter') {
-                    // Prioritzar "Mostrar Informació" si està disponible
                     if (!mostrarInfoButton.classList.contains('hidden') && !mostrarInfoButton.disabled) {
                         mostrarInfoButton.click();
-                        event.preventDefault(); // Evitar comportament per defecte
+                        event.preventDefault(); 
                     }
                 }
             });
-
-            if (window.innerWidth >= 1024) { 
-                toggleOrientationSimulation();
-            }
+            if (window.innerWidth >= 1024) toggleOrientationSimulation();
         }
 
         document.addEventListener('DOMContentLoaded', initialize);
