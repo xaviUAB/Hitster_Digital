@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartró Hitster Music Bingo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Llibreria per al confeti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+            /* Centratge per pantalla */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            touch-action: none; /* Evita scroll mentre es dibuixa */
+            transition: background-color 0.5s ease;
+        }
+
+        /* Animació de victòria (fons canviant) */
+        @keyframes rainbow-bg {
+            0% { background-color: #4ade80; }   /* Verd */
+            25% { background-color: #f472b6; }  /* Rosa */
+            50% { background-color: #facc15; }  /* Groc */
+            75% { background-color: #a78bfa; }  /* Violeta */
+            100% { background-color: #22d3ee; } /* Blau */
+        }
+
+        .victory-mode {
+            animation: rainbow-bg 5s linear infinite alternate;
+        }
+        
+        /* Animació d'error (quan cliques color incorrecte) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .error-shake {
+            animation: shake 0.2s ease-in-out 2;
+            box-shadow: inset 0 0 0 4px red !important;
+        }
+
+        /* Estils específics per a la impressió */
+        @media print {
+            body {
+                background-color: white;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            #controls-container, .trash-btn, #exit-btn, #exit-modal, footer {
+                display: none !important;
+            }
+            #bingo-card {
+                box-shadow: none !important;
+                transform: scale(1) !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+            .victory-mode {
+                animation: none !important;
+                background-color: white !important;
+            }
+        }
+
+        /* Graella del bingo */
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 4px;
+            background-color: black;
+            /* Vora superior i laterals de 4px, la inferior la posa el següent element */
+            border: 4px solid black;
+            border-bottom: none; 
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+        }
+
+        .bingo-cell {
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 60%);
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Fitxa de marcatge (Token) */
+        .bingo-token {
+            width: 70%;
+            height: 70%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semitransparent inicialment */
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            pointer-events: none; 
+            display: none; 
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        
+        .bingo-cell.marked .bingo-token {
+            display: block;
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Estat bloquejat (després de 5s) */
+        .bingo-cell.locked .bingo-token {
+            background-color: rgba(0, 0, 0, 0.85); /* Més fosc/solid */
+            border-color: #a1a1aa; /* Grisenc */
+            transform: scale(0.95); /* Lleugerament més petit */
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Estructura del cartró */
+        #bingo-card {
+            width: 100%;
+            max-width: 400px;
+            background-color: transparent; /* El fons el fan els fills */
+            padding: 0; 
+            filter: drop-shadow(0 20px 13px rgba(0, 0, 0, 0.5));
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            margin-bottom: 1.5rem; /* Espai sota el cartró */
+        }
+
+        /* Franja de Títol/Categoria */
+        #category-title-bar {
+            transition: background-color 0.3s ease, color 0.3s ease;
+            width: 100%;
+            margin: 0;
+            border-left: 4px solid black;
+            border-right: 4px solid black;
+            border-top: 4px solid black;
+            border-bottom: none;
+            z-index: 10;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Classe per a la vora negra del text */
+        .text-stroke {
+            -webkit-text-stroke: 1.2px black;
+            text-shadow: 2px 2px 0 #000;
+            letter-spacing: 1px;
+        }
+
+        /* Àrea de Canvas (Dibuix) */
+        .input-area {
+            background-color: white;
+            width: 100%;
+            height: 180px; 
+            margin-top: 0;
+            border: 4px solid black;
+            border-top: none; 
+            position: relative;
+            cursor: crosshair;
+            overflow: hidden;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Botó Paperera */
+        .trash-btn {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid #e5e7eb;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .trash-btn:hover {
+            background-color: #fee2e2;
+            border-color: #fca5a5;
+            transform: scale(1.1);
+        }
+
+        /* Botons de colors del joc */
+        .color-btn {
+            width: 50px; 
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            cursor: pointer;
+        }
+        .color-btn:active {
+            transform: scale(0.9);
+        }
+        .color-btn.selected {
+            border-color: white;
+            box-shadow: 0 0 15px rgba(255,255,255,0.8);
+            transform: scale(1.15);
+            z-index: 10;
+        }
+
+        /* Botons de Nivell */
+        .level-btn {
+            @apply px-8 py-3 rounded-lg font-bold text-base transition-all duration-200 border border-gray-600;
+        }
+        .level-btn-inactive {
+            background-color: #374151; /* gray-700 */
+            color: #9ca3af; /* gray-400 */
+        }
+        .level-btn-active {
+            background-color: #22c55e; /* green-500 */
+            color: #111827; /* gray-900 */
+            border-color: white;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* Botó Sortir */
+        #exit-btn {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background-color: #ef4444;
+            color: white;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: background-color 0.2s;
+            z-index: 50;
+            display: none; /* Ocult inicialment */
+        }
+        #exit-btn:hover {
+            background-color: #dc2626;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- MODAL DE CONFIRMACIÓ PERSONALITZAT -->
+    <div id="exit-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-600 max-w-sm w-full mx-4 text-center">
+            <h3 class="text-xl font-bold text-white mb-2">Vols sortir?</h3>
+            <p class="text-gray-300 mb-6 text-sm">Esborraràs tot el progrés del cartró actual.</p>
+            <div class="flex justify-center gap-4">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-500 transition font-semibold">
+                    Cancel·lar
+                </button>
+                <button onclick="resetGame()" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition font-bold shadow-lg">
+                    Sortir i Reiniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botó Sortir (Fix a dalt a la dreta) -->
+    <button id="exit-btn" onclick="showExitModal()">
+        ✕ Sortir
+    </button>
+
+    <!-- CARTRÓ DE BINGO (ARA A L'INICI) -->
+    <div id="bingo-card">
+        
+        <!-- GRAELLA 5x5 -->
+        <div id="grid" class="bingo-grid">
+            <!-- Les caselles es generen via JS -->
+        </div>
+
+        <!-- TÍTOL CENTRAL (CANVIA DE COLOR) -->
+        <div id="category-title-bar" class="bg-black text-white text-center font-black text-lg sm:text-xl tracking-wider py-2 uppercase select-none px-2 truncate w-full">
+            Hitster Music Bingo
+        </div>
+
+        <!-- ÀREA D'ESCRIPTURA (CANVAS) -->
+        <div class="input-area" id="canvas-container">
+            <canvas id="signature-pad"></canvas>
+            
+            <!-- Botó Paperera -->
+            <button class="trash-btn" onclick="clearCanvas()" title="Esborrar signatura">
+                🗑️
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTENIDOR DE CONTROLS (SOTA EL CARTRÓ) -->
+    <div id="controls-container" class="w-full flex flex-col items-center">
+        
+        <!-- Controls Inicials -->
+        <div id="controls" class="flex flex-col items-center gap-6 w-full max-w-md">
+            
+            <!-- Botons d'Acció (Ara a dalt) -->
+            <div class="flex gap-4 w-full justify-center">
+                <button onclick="generateCard()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 border-2 border-blue-400">
+                    🔄 Regenerar
+                </button>
+                
+                <!-- Botó Jugar -->
+                <button id="btn-jugar" onclick="startGameMode()" disabled 
+                    class="bg-gray-600 text-gray-400 font-bold py-3 px-8 rounded-full shadow-lg transition transform cursor-not-allowed flex items-center gap-2 border-2 border-gray-500">
+                    <span>▶️</span> Jugar
+                </button>
+            </div>
+
+            <!-- Selecció de Nivell (Ara a sota) -->
+            <div class="w-full flex flex-col items-center gap-2">
+                <div class="bg-gray-800 p-4 rounded-xl flex gap-4 border border-gray-700 shadow-lg w-full justify-center">
+                    <button id="btn-novell" onclick="selectLevel('novell')" class="level-btn level-btn-inactive flex-1">
+                        Novell
+                    </button>
+                    <button id="btn-expert" onclick="selectLevel('expert')" class="level-btn level-btn-inactive flex-1">
+                        Expert
+                    </button>
+                </div>
+                <p id="level-hint" class="text-sm text-gray-400 mt-1">Selecciona un nivell per començar</p>
+            </div>
+        </div>
+
+        <!-- Controls de Joc (Ocults inicialment) -->
+        <div id="game-controls" class="hidden flex-col items-center gap-4 mt-0"> <!-- Margin top reduït a 0 -->
+            <!-- Només botons de colors, sense text -->
+            <div class="flex gap-4" id="color-palette">
+                <!-- Els botons es generen via JS -->
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="mt-12 text-gray-500 text-xs">
+        Una app de XRG
+    </footer>
+
+    <script>
+        // Configuració de Categories per Nivell
+        const CONFIG_NOVELL = [
+            { color: '#4ade80', name: 'Grup o Solista' },       // Verd
+            { color: '#f472b6', name: 'Anterior al 2000?' },    // Rosa
+            { color: '#facc15', name: '4 anys amunt o avall' }, // Groc
+            { color: '#a78bfa', name: 'Dècada' },               // Violeta
+            { color: '#22d3ee', name: '2 anys amunt o avall' }  // Blau
+        ];
+
+        const CONFIG_EXPERT = [
+            { color: '#4ade80', name: 'Títol de la cançó' },        // Verd
+            { color: '#f472b6', name: 'Any exacte' },               // Rosa
+            { color: '#facc15', name: 'Nom del grup o solista' },   // Groc
+            { color: '#a78bfa', name: 'Dècada' },                   // Violeta
+            { color: '#22d3ee', name: '3 anys amunt o avall' }      // Blau
+        ];
+
+        // Colors base
+        const BASE_COLORS = ['#4ade80', '#f472b6', '#facc15', '#a78bfa', '#22d3ee'];
+
+        const DEFAULT_TITLE = "HITSTER MUSIC BINGO";
+        const DEFAULT_BG = "black";
+        const DEFAULT_TEXT_COLOR = "white";
+
+        let isGameMode = false;
+        let activeCategoryIndex = null;
+        let selectedLevel = null; // 'novell' o 'expert'
+        let currentCategories = []; // S'omplirà segons el nivell
+        let bingoAchieved = false; 
+
+        // --- 0. Selecció de Nivell ---
+
+        function selectLevel(level) {
+            selectedLevel = level;
+            updateLevelUI(level);
+            
+            // Activar botó Jugar
+            const btnJugar = document.getElementById('btn-jugar');
+            btnJugar.disabled = false;
+            btnJugar.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed', 'border-gray-500');
+            btnJugar.classList.add('bg-green-500', 'hover:bg-green-600', 'text-gray-900', 'border-green-400');
+            
+            // Amagar missatge d'ajuda
+            document.getElementById('level-hint').classList.add('opacity-0');
+        }
+        
+        function updateLevelUI(level) {
+            // Botons inicials
+            const btnNovell = document.getElementById('btn-novell');
+            const btnExpert = document.getElementById('btn-expert');
+            
+            btnNovell.className = 'level-btn level-btn-inactive flex-1';
+            btnExpert.className = 'level-btn level-btn-inactive flex-1';
+
+            if (level === 'novell') btnNovell.className = 'level-btn level-btn-active flex-1';
+            else btnExpert.className = 'level-btn level-btn-active flex-1 bg-purple-500 hover:bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)]';
+        }
+        
+        // --- 1. Lògica del Bingo i Caselles ---
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateCard() {
+            const gridContainer = document.getElementById('grid');
+            gridContainer.innerHTML = ''; 
+            bingoAchieved = false;
+            document.body.classList.remove('victory-mode');
+
+            let cells = [];
+            BASE_COLORS.forEach(color => {
+                for (let i = 0; i < 5; i++) {
+                    cells.push(color);
+                }
+            });
+
+            cells = shuffleArray(cells);
+
+            cells.forEach((color, index) => {
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'bingo-cell';
+                // Guardem el color en hexadecimal normalitzat per comparar
+                cellDiv.dataset.color = color.toLowerCase(); 
+                cellDiv.style.backgroundColor = color;
+                cellDiv.dataset.index = index; // Guardar índex per comprovació
+                
+                const token = document.createElement('div');
+                token.className = 'bingo-token';
+                cellDiv.appendChild(token);
+
+                // --- GESTIÓ DEL CLIC A LA CASELLA ---
+                cellDiv.addEventListener('click', () => {
+                    if (!isGameMode) return;
+
+                    // 1. Comprovar categoria activa
+                    if (activeCategoryIndex === null) {
+                         // Petit feedback visual negatiu al panell de colors
+                         const palette = document.getElementById('color-palette');
+                         palette.classList.add('animate-pulse');
+                         setTimeout(() => palette.classList.remove('animate-pulse'), 500);
+                         return;
+                    }
+                    
+                    const activeColor = currentCategories[activeCategoryIndex].color.toLowerCase();
+                    
+                    // 2. Comprovar coincidència de color
+                    if (cellDiv.dataset.color !== activeColor) {
+                        // Error visual
+                        cellDiv.classList.add('error-shake');
+                        setTimeout(() => cellDiv.classList.remove('error-shake'), 200);
+                        return;
+                    }
+
+                    // 3. Comprovar si està bloquejada
+                    if (cellDiv.classList.contains('locked')) return;
+
+                    // 4. Marcar / Desmarcar
+                    if (cellDiv.classList.contains('marked')) {
+                        // Desmarcar (si no està bloquejada)
+                        cellDiv.classList.remove('marked');
+                        // Netejar timeout si existia
+                        if (cellDiv.lockTimeout) {
+                            clearTimeout(cellDiv.lockTimeout);
+                            cellDiv.lockTimeout = null;
+                        }
+                    } else {
+                        // Marcar
+                        cellDiv.classList.add('marked');
+                        checkBingo();
+                        
+                        // Temporitzador de bloqueig (5s)
+                        cellDiv.lockTimeout = setTimeout(() => {
+                            if (cellDiv.classList.contains('marked')) {
+                                cellDiv.classList.add('locked');
+                            }
+                        }, 5000);
+                    }
+                });
+
+                gridContainer.appendChild(cellDiv);
+            });
+            
+            resetTitleBar();
+            clearCanvas();
+        }
+
+        function checkBingo() {
+            const cells = document.querySelectorAll('.bingo-cell');
+            const size = 5;
+            let hasBingo = false;
+
+            const checkLine = (indices) => {
+                return indices.every(i => cells[i].classList.contains('marked'));
+            };
+
+            // Files, Columnes, Diagonals
+            for (let i = 0; i < size; i++) {
+                const row = [], col = [];
+                for (let j = 0; j < size; j++) {
+                    row.push(i * size + j);
+                    col.push(j * size + i);
+                }
+                if (checkLine(row)) hasBingo = true;
+                if (checkLine(col)) hasBingo = true;
+            }
+            const diag1 = [0, 6, 12, 18, 24];
+            const diag2 = [4, 8, 12, 16, 20];
+            if (checkLine(diag1)) hasBingo = true;
+            if (checkLine(diag2)) hasBingo = true;
+
+            if (hasBingo && !bingoAchieved) {
+                triggerVictory();
+            }
+        }
+
+        function triggerVictory() {
+            bingoAchieved = true;
+            document.body.classList.add('victory-mode');
+            
+            const duration = 3000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+            const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                const particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        // --- UI Managers ---
+
+        function resetTitleBar() {
+            const titleBar = document.getElementById('category-title-bar');
+            titleBar.style.backgroundColor = DEFAULT_BG;
+            titleBar.style.color = DEFAULT_TEXT_COLOR;
+            titleBar.textContent = DEFAULT_TITLE;
+            titleBar.classList.remove('text-stroke'); 
+            activeCategoryIndex = null;
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+        }
+
+        function setCategory(index) {
+            const titleBar = document.getElementById('category-title-bar');
+            
+            if (activeCategoryIndex === index) {
+                resetTitleBar();
+                return;
+            }
+
+            const cat = currentCategories[index];
+            activeCategoryIndex = index;
+            
+            titleBar.style.backgroundColor = cat.color;
+            titleBar.style.color = 'white'; 
+            titleBar.classList.add('text-stroke'); 
+            titleBar.textContent = cat.name.toUpperCase();
+
+            document.querySelectorAll('.color-btn').forEach((btn, idx) => {
+                if (idx === index) btn.classList.add('selected');
+                else btn.classList.remove('selected');
+            });
+            
+            // Esborrar canvas en canviar categoria
+            clearCanvas();
+        }
+
+        // --- 2. Lògica de Mode Joc i Control ---
+
+        function startGameMode() {
+            if (!selectedLevel) return; 
+
+            isGameMode = true;
+            currentCategories = selectedLevel === 'novell' ? CONFIG_NOVELL : CONFIG_EXPERT;
+            
+            document.getElementById('controls').classList.add('hidden');
+            document.getElementById('exit-btn').style.display = 'block'; // Mostrar botó sortir
+            
+            const gameControls = document.getElementById('game-controls');
+            gameControls.classList.remove('hidden');
+            gameControls.classList.add('flex');
+
+            const palette = document.getElementById('color-palette');
+            palette.innerHTML = '';
+            currentCategories.forEach((cat, index) => {
+                const btn = document.createElement('div');
+                btn.className = 'color-btn shadow-lg';
+                btn.style.backgroundColor = cat.color;
+                btn.title = cat.name; 
+                btn.addEventListener('click', () => setCategory(index));
+                palette.appendChild(btn);
+            });
+            
+            // NO REGENERAR en Jugar, usar el cartró actual
+            resetTitleBar();
+            clearCanvas();
+        }
+        
+        function showExitModal() {
+            document.getElementById('exit-modal').classList.remove('hidden');
+        }
+        
+        function closeModal() {
+            document.getElementById('exit-modal').classList.add('hidden');
+        }
+        
+        function confirmExit() {
+            // Ara fem servir el modal, no window.confirm
+            showExitModal();
+        }
+
+        function resetGame() {
+            closeModal();
+            isGameMode = false;
+            bingoAchieved = false;
+            document.body.classList.remove('victory-mode');
+            
+            // Netejar cel·les
+            const cells = document.querySelectorAll('.bingo-cell');
+            cells.forEach(cell => {
+                cell.classList.remove('marked', 'locked', 'winner');
+                if (cell.lockTimeout) clearTimeout(cell.lockTimeout);
+            });
+            
+            document.getElementById('controls').classList.remove('hidden');
+            document.getElementById('game-controls').classList.add('hidden');
+            document.getElementById('game-controls').classList.remove('flex');
+            document.getElementById('exit-btn').style.display = 'none';
+            
+            resetTitleBar();
+            clearCanvas();
+        }
+
+        // --- 3. Lògica del Canvas (Dibuix) ---
+
+        const canvas = document.getElementById('signature-pad');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            if (canvas.width !== container.offsetWidth || canvas.height !== container.offsetHeight) {
+                canvas.width = container.offsetWidth;
+                canvas.height = container.offsetHeight;
+                
+                ctx.strokeStyle = "#000";
+                ctx.lineWidth = 3;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+            }
+        }
+
+        function getCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+            if (e.type.startsWith('touch')) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const coords = getCoordinates(e);
+            lastX = coords.x;
+            lastY = coords.y;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); 
+            const coords = getCoordinates(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(coords.x, coords.y);
+            ctx.stroke();
+            lastX = coords.x;
+            lastY = coords.y;
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+        
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // --- Inicialització ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            generateCard();
+            setTimeout(resizeCanvas, 100);
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+
+    </script>
+
+</body>
+</html>
