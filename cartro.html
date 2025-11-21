@@ -121,7 +121,7 @@
             width: 70%;
             height: 70%;
             background-color: rgba(0, 0, 0, 0.25);
-            border: 3px solid rgba(255, 255, 255, 0.9);
+            border: 3px solid white;
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
             pointer-events: none; 
@@ -255,7 +255,7 @@
             width: 45px; 
             height: 45px;
             border-radius: 50%;
-            border: 2px solid black;
+            border: 3px solid black;
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
@@ -266,6 +266,21 @@
             transform: scale(1.75) !important; 
             box-shadow: 0 0 0 2px black, 0 0 15px rgba(255,255,255,0.6); 
             z-index: 40; 
+        }
+
+        /* Botons de Nivell */
+        .card-level-btn {
+            @apply px-8 py-3 rounded-full font-black text-lg border-2 transition-all duration-200 shadow-md uppercase tracking-wider;
+        }
+        .card-level-inactive {
+            background-color: #374151; /* gray-700 */
+            color: #9ca3af; /* gray-400 */
+        }
+        .card-level-active {
+            background-color: #22c55e; /* green-500 */
+            border-color: #14532d;
+            color: #111827;
+            transform: scale(1.05);
         }
 
         #exit-btn {
@@ -281,6 +296,7 @@
 </head>
 <body>
 
+    <!-- MODAL DE CONFIRMACIÓ PERSONALITZAT -->
     <div id="exit-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border border-gray-600 max-w-sm w-full mx-4 text-center">
             <h3 class="text-xl font-bold text-white mb-2">Vols sortir?</h3>
@@ -296,27 +312,46 @@
         </div>
     </div>
 
-    <button id="exit-btn" onclick="showExitModal()">✕ Sortir</button>
+    <!-- Botó Sortir (Fix a dalt a la dreta) -->
+    <button id="exit-btn" onclick="showExitModal()">
+        ✕ Sortir
+    </button>
 
+    <!-- CARTRÓ DE BINGO -->
     <div id="bingo-card">
+        
+        <!-- GRAELLA 5x5 -->
         <div id="grid" class="bingo-grid"></div>
+
+        <!-- TÍTOL CENTRAL -->
         <div id="category-title-bar" class="bg-black text-white text-center font-black text-lg sm:text-xl tracking-wider py-2 uppercase select-none px-2 truncate w-full">
             Hitster Music Bingo
         </div>
+
+        <!-- Footer canviant (Nivell / Canvas) -->
         <div id="card-footer">
+            
+            <!-- CAPA 1: CONFIGURACIÓ (Botons dins la zona blanca) -->
             <div id="setup-layer">
+                
+                <!-- Botons d'Acció -->
                 <div class="flex gap-4 w-full justify-center mb-2">
                     <button onclick="generateCard()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-md transition transform hover:scale-105 border-2 border-green-800 flex items-center gap-2 justify-center text-sm">
                         🔄 Regenerar
                     </button>
+                    
                     <button id="btn-jugar" onclick="startGameMode()" disabled class="bg-gray-300 text-gray-500 font-bold py-2 px-6 rounded-full shadow-none border-2 border-gray-400 flex items-center gap-2 justify-center text-sm cursor-not-allowed">
                         ▶️ Jugar
                     </button>
                 </div>
+
                 <div class="w-full h-px bg-gray-200 my-1"></div>
+
+                <!-- Selector de Nivell -->
                 <div class="flex flex-col items-center gap-2 w-full">
                     <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">TRIA EL NIVELL</p>
                     <div class="flex justify-center gap-6">
+                        <!-- Botons nivell arrodonits -->
                         <button id="btn-novell" onclick="selectLevel('novell')" 
                             class="px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 border-2 border-gray-200 bg-white text-gray-400 hover:bg-gray-50">
                             Novell
@@ -329,15 +364,25 @@
                 </div>
                 <p id="level-hint" class="hidden"></p> 
             </div>
+
+            <!-- CAPA 2: CANVAS (Només dibuix) -->
             <div id="game-layer">
                 <canvas id="signature-pad"></canvas>
                 <button class="trash-btn" onclick="clearCanvas()" title="Esborrar">🗑️</button>
-                <div class="color-palette-container no-print" id="color-palette"></div>
+                
+                <!-- Botons de colors flotants -->
+                <div class="color-palette-container no-print" id="color-palette">
+                    <!-- Els botons es generen via JS -->
+                </div>
             </div>
+
         </div>
     </div>
 
-    <div id="game-controls" class="hidden flex-col items-center gap-2 w-full max-w-[400px]"></div>
+    <!-- CONTROLS DE JOC (Sota el cartró) -->
+    <div id="game-controls" class="hidden flex-col items-center gap-2 w-full max-w-[400px]">
+        <!-- Text informatiu eliminat segons instruccions anteriors, o el mantenim ocult -->
+    </div>
 
     <footer class="mt-8 text-gray-500 text-xs">Una app de XRG</footer>
 
@@ -372,7 +417,7 @@
         let attentionInterval;
         let audioCtx = null;
         let victoryLoopInterval;
-        let confettiTimeout; // Canviat d'interval a timeout
+        let confettiTimeout; // FIX: Declaració global per evitar ReferenceError
 
         function initAudio() {
             if (!audioCtx) {
@@ -400,7 +445,6 @@
             } catch(e) {}
         }
 
-        // So de focs artificials
         function playFireworkSound() {
             try {
                 if (!audioCtx) initAudio();
@@ -430,7 +474,6 @@
                 if (!audioCtx) initAudio();
                 const now = audioCtx.currentTime;
                 const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 659.25]; 
-                // Timings ajustats per coincidir amb l'animació de 4s (Pop al 15% -> 0.6s, 1.2s, 1.8s...)
                 const timings = [0, 0.6, 1.2, 1.8, 2.4, 3.0]; 
                 
                 notes.forEach((freq, i) => {
@@ -476,6 +519,9 @@
                 btnJugar.disabled = false;
                 btnJugar.className = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-md transition transform hover:scale-105 border-2 border-green-800 flex items-center gap-2 justify-center text-sm cursor-pointer";
             }
+            
+            const hint = document.getElementById('level-hint');
+            if(hint) hint.classList.add('opacity-0');
         }
 
         function shuffleArray(array) {
@@ -633,7 +679,7 @@
                 }
             }
         }
-
+        
         function triggerVictory() {
             bingoAchieved = true;
             document.body.classList.add('victory-mode');
@@ -642,20 +688,16 @@
             if (victoryLoopInterval) clearInterval(victoryLoopInterval);
             victoryLoopInterval = setInterval(playVictoryLoop, 5000); 
 
-            // Confetti Random Loop
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
 
             const launchConfetti = () => {
                 if (!bingoAchieved) return;
-
                 playFireworkSound();
-
                 const particleCount = Math.floor(Math.random() * 50) + 50;
                 confetti(Object.assign({}, defaults, { 
                     particleCount, 
                     origin: { x: Math.random(), y: Math.random() - 0.2 } 
                 }));
-
                 const randomDelay = Math.random() * 1500 + 500; 
                 confettiTimeout = setTimeout(launchConfetti, randomDelay);
             };
