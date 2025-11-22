@@ -154,13 +154,11 @@
         
         <header class="mb-6 flex justify-between items-center">
             <div class="flex-grow flex justify-start items-center space-x-2">
-                <!-- Botó Instruccions -->
                 <a href="instruccions_bingo.html" target="_blank">
                     <button class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md" title="Instruccions del Joc">
                         i
                     </button>
                 </a>
-                <!-- Botó QR Cartró -->
                 <button id="qr-modal-btn" class="w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full flex items-center justify-center text-lg transition duration-300 ease-in-out shadow-md" title="Genera un cartró">
                     📱
                 </button>
@@ -235,11 +233,9 @@
     <!-- MODAL QR -->
     <div id="qr-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0 pointer-events-none">
         <div class="relative bg-white p-2 rounded-xl shadow-2xl max-w-sm w-full transform transition-transform duration-300 scale-90">
-            <!-- Botó Tancar -->
             <button id="close-qr-modal" class="absolute -top-4 -right-4 bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold shadow-lg hover:bg-red-700 transition z-10 border-2 border-white">
                 ✕
             </button>
-            <!-- Imatge -->
             <img src="https://xaviuab.github.io/Hitster_Digital/imatges/qr_cartro.png" alt="QR Cartró" class="w-full h-auto rounded-lg border border-gray-200">
             <p class="text-center text-gray-800 font-bold mt-3 mb-1">Escaneja per obtenir el teu cartró!</p>
         </div>
@@ -258,12 +254,6 @@
         const appTitle = document.getElementById('app-title'); 
         const mobileWarning = document.getElementById('mobile-warning');
         
-        // QR Modal
-        const qrModalBtn = document.getElementById('qr-modal-btn');
-        const qrModal = document.getElementById('qr-modal');
-        const closeQrModalBtn = document.getElementById('close-qr-modal');
-
-        // Historial DOM
         const historySection = document.getElementById('history-section');
         const toggleHistoryBtn = document.getElementById('toggle-history-btn');
         const historyListContainer = document.getElementById('history-list-container');
@@ -272,6 +262,10 @@
 
         const mainCard = document.getElementById('main-card');
         const toggleOrientationBtn = document.getElementById('toggle-orientation-btn');
+        
+        const qrModalBtn = document.getElementById('qr-modal-btn');
+        const qrModal = document.getElementById('qr-modal');
+        const closeQrModalBtn = document.getElementById('close-qr-modal');
 
         const REMOTE_CONTENT_BASE_URL = 'https://raw.githubusercontent.com/xaviuab/Hitster_Digital/main/dades/';
         const GITHUB_API_URL = "https://api.github.com/repos/xaviuab/Hitster_Digital/contents/dades";
@@ -521,7 +515,7 @@
             let answerText = "";
             const year = parseInt(track.year);
             const label = bingoResult.label;
-            if (label === "Anterior al 2000?") answerText = track.year;
+            if (label === "Anterior al 2000?") answerText = track.year; 
             else if (label === "Dècada") answerText = calculateDecadeText(year);
             else if (label === "Títol de la cançó") answerText = track.title;
             else if (label === "Grup o solista" || label === "Nom del grup o solista") answerText = track.artist;
@@ -674,7 +668,6 @@
 
                 if (!spotifyAccountType) {
                     uploadSection.classList.add('hidden'); 
-                    // MODIFICAT: Lògica de botons de compte segons OS
                     const premiumBtnClass = isIOS 
                         ? "bg-gray-600 text-gray-400 cursor-not-allowed opacity-50"
                         : "bg-green-500 hover:bg-green-600 text-gray-900 shadow-md";
@@ -810,6 +803,7 @@
             if (rapidColorInterval) clearInterval(rapidColorInterval);
             if (iframeFocusInterval) clearInterval(iframeFocusInterval);
             countdownInterval = null; rapidColorInterval = null; iframeFocusInterval = null;
+            // IMPORTANT: No resetegem el color aquí. El color ha de persistir.
         }
 
         function startCountdown() {
@@ -1057,7 +1051,7 @@
                         extraInfoHTML = `<p class="text-xl font-black ${currentBingoResult.textColorClass} mt-1 uppercase">${decade}</p>`;
                     } else if (label.includes("anys amunt o avall")) {
                         const rangeText = calculateRangeText(trackYear, label);
-                        extraInfoHTML = `<p class="text-xl font-bold ${currentBingoResult.textColorClass} mt-1">${rangeText}</p>`;
+                        extraInfoHTML = `<p class="text-xl font-black ${currentBingoResult.textColorClass} mt-1">${rangeText}</p>`;
                     }
                 }
 
@@ -1122,6 +1116,7 @@
         async function initialize() {
             await fetchRemoteCsvs(); 
             renderSetupSection();
+
             nouHitButton.addEventListener('click', handleNouHitClick);
             mostrarInfoButton.addEventListener('click', handleMostrarInfoClick);
             uploadButton.addEventListener('click', () => fileInput.click());
@@ -1144,7 +1139,6 @@
                     qrModal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
                 });
             }
-            // Close modal on background click
             qrModal.addEventListener('click', (e) => {
                 if (e.target === qrModal) {
                     qrModal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
