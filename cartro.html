@@ -29,7 +29,8 @@
             75% { background-color: #a78bfa; }
             100% { background-color: #22d3ee; }
         }
-        .victory-mode { animation: rainbow-bg 5s linear infinite alternate; }
+        /* Fons canvia més ràpid */
+        .victory-mode { animation: rainbow-bg 2s linear infinite alternate; }
         
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -54,20 +55,17 @@
             animation: button-pulse 1.5s infinite ease-in-out;
         }
 
-        /* ANIMACIÓ DE FITXES GUANYADORES (ONADA LENTA) */
-        @keyframes winning-pulse {
-            0% { transform: scale(1); border-color: white; background-color: black; box-shadow: none; }
-            15% { transform: scale(1.4); border-color: #fcd34d; background-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.9); }
-            30% { transform: scale(1); border-color: white; background-color: black; box-shadow: none; }
-            100% { transform: scale(1); border-color: white; background-color: black; box-shadow: none; }
+        /* ANIMACIÓ DE FITXES GUANYADORES (BATEC RÀPID) */
+        @keyframes winning-beat {
+            0% { transform: scale(1); border-color: white; background-color: black; }
+            50% { transform: scale(1.4); border-color: #fcd34d; background-color: #fbbf24; box-shadow: 0 0 25px rgba(251, 191, 36, 1); } 
+            100% { transform: scale(1); border-color: white; background-color: black; }
         }
         
         .winning-token {
-            animation-name: winning-pulse;
-            animation-duration: 4s; 
-            animation-iteration-count: infinite;
-            animation-timing-function: ease-in-out;
-            z-index: 30 !important; 
+            /* 0.8s per cicle = batec ràpid */
+            animation: winning-beat 0.8s infinite ease-in-out !important;
+            z-index: 50 !important; 
             background-color: black !important; 
             opacity: 1 !important;
             display: block !important;
@@ -106,10 +104,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow: visible; 
             user-select: none;
             -webkit-user-select: none;
             transition: opacity 0.3s ease, filter 0.3s ease;
+            z-index: 1; 
+        }
+        
+        .bingo-cell:has(.winning-token) {
+            z-index: 40;
         }
         
         .bingo-cell.dimmed {
@@ -120,7 +123,7 @@
         .bingo-token {
             width: 70%;
             height: 70%;
-            background-color: rgba(0, 0, 0, 0.25);
+            background-color: rgba(0, 0, 0, 1); 
             border: 3px solid white;
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
@@ -135,8 +138,8 @@
         }
 
         .bingo-cell.locked .bingo-token {
-            background-color: rgba(0, 0, 0, 0.6); 
-            border-color: #a1a1aa; 
+            background-color: #1f2937; 
+            border-color: #d1d5db; 
             transform: scale(0.95);
         }
 
@@ -264,8 +267,23 @@
         .color-btn.selected {
             border-color: white;
             transform: scale(1.75) !important; 
-            box-shadow: 0 0 0 2px white, 0 0 15px rgba(255,255,255,0.6); 
+            box-shadow: 0 0 0 2px black, 0 0 15px rgba(255,255,255,0.6); 
             z-index: 40; 
+        }
+
+        /* Botons de Nivell */
+        .card-level-btn {
+            @apply px-8 py-3 rounded-full font-black text-lg border-2 transition-all duration-200 shadow-md uppercase tracking-wider;
+        }
+        .card-level-inactive {
+            background-color: #374151; /* gray-700 */
+            color: #9ca3af; /* gray-400 */
+        }
+        .card-level-active {
+            background-color: #22c55e; /* green-500 */
+            border-color: #14532d;
+            color: #111827;
+            transform: scale(1.05);
         }
 
         #exit-btn {
@@ -371,9 +389,8 @@
         let pressTimer;
         let attentionInterval;
         let audioCtx = null;
-        // Corregit: només una declaració global
         let victoryLoopInterval;
-        let confettiTimeout; 
+        let confettiTimeout;
 
         function initAudio() {
             if (!audioCtx) {
@@ -430,7 +447,7 @@
                 if (!audioCtx) initAudio();
                 const now = audioCtx.currentTime;
                 const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 659.25]; 
-                const timings = [0, 0.6, 1.2, 1.8, 2.4, 3.0]; 
+                const timings = [0, 0.3, 0.6, 0.9, 1.2, 1.5]; // Ràpid
                 
                 notes.forEach((freq, i) => {
                     if (i >= timings.length) return;
@@ -443,9 +460,9 @@
                     const startTime = now + timings[i];
                     gain.gain.setValueAtTime(0, startTime);
                     gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
-                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
                     osc.start(startTime);
-                    osc.stop(startTime + 0.4);
+                    osc.stop(startTime + 0.3);
                 });
             } catch(e) {}
         }
@@ -536,6 +553,7 @@
                 
                 if (activeCategoryIndex === null) {
                     const palette = document.getElementById('color-palette');
+                    // Trigger visual cue
                     document.querySelectorAll('.color-btn').forEach(btn => {
                         btn.classList.remove('btn-attention');
                         void btn.offsetWidth; 
@@ -562,16 +580,21 @@
                 }
             };
 
-            // MOUSE CLICK
             cell.addEventListener('click', (e) => {
                 toggleToken();
             });
 
-            // GESTIÓ TÀCTIL OPTIMITZADA
             let touchStartTime = 0;
             
             cell.addEventListener('touchstart', (e) => {
                 if (!isGameMode) return;
+                
+                // Si no hi ha categoria, preventDefault per evitar accions extranyes i mostrar l'avís
+                if (activeCategoryIndex === null) {
+                    e.preventDefault();
+                    toggleToken(); // Això dispararà l'avís visual
+                    return;
+                }
                 
                 touchStartTime = Date.now();
 
@@ -584,14 +607,12 @@
                         touchStartTime = 0; 
                      }, 2000);
                 } else {
-                    if (activeCategoryIndex !== null) {
-                         const activeColor = currentCategories[activeCategoryIndex].color.toLowerCase();
-                         if (cell.dataset.color === activeColor) {
-                             e.preventDefault(); 
-                             toggleToken();
-                             touchStartTime = 0; 
-                         }
-                    }
+                     const activeColor = currentCategories[activeCategoryIndex].color.toLowerCase();
+                     if (cell.dataset.color === activeColor) {
+                         e.preventDefault(); 
+                         toggleToken();
+                         touchStartTime = 0; 
+                     }
                 }
             });
 
@@ -624,17 +645,15 @@
             
             cells.forEach(c => {
                 const t = c.querySelector('.bingo-token');
-                if(t) { t.classList.remove('winning-token'); t.style.animationDelay = ''; }
+                if(t) { t.classList.remove('winning-token'); }
             });
 
-            let winningIndices = new Map(); 
+            let winningIndices = new Set();
 
             const checkLine = (indices) => {
                 const isLine = indices.every(i => cells[i].classList.contains('marked'));
                 if (isLine) {
-                    indices.forEach((idx, order) => {
-                        if(!winningIndices.has(idx)) winningIndices.set(idx, order);
-                    });
+                    indices.forEach(idx => winningIndices.add(idx));
                 }
                 return isLine;
             };
@@ -656,12 +675,9 @@
             if (checkLine(diag2)) hasBingo = true;
 
             if (hasBingo) {
-                winningIndices.forEach((order, idx) => {
+                winningIndices.forEach(idx => {
                     const token = cells[idx].querySelector('.bingo-token');
-                    if(token) {
-                        token.classList.add('winning-token');
-                        token.style.animationDelay = `${order * 0.5}s`; 
-                    }
+                    if(token) token.classList.add('winning-token');
                 });
 
                 if (!bingoAchieved) {
@@ -680,7 +696,7 @@
             
             playVictoryLoop();
             if (victoryLoopInterval) clearInterval(victoryLoopInterval);
-            victoryLoopInterval = setInterval(playVictoryLoop, 5000); 
+            victoryLoopInterval = setInterval(playVictoryLoop, 2500); // Melodia cada 2.5s (coincideix aproximadament amb la durada)
 
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
 
@@ -692,7 +708,7 @@
                     particleCount, 
                     origin: { x: Math.random(), y: Math.random() - 0.2 } 
                 }));
-                const randomDelay = Math.random() * 1500 + 500; 
+                const randomDelay = Math.random() * 800 + 200; // Més ràpid (0.2s - 1.0s)
                 confettiTimeout = setTimeout(launchConfetti, randomDelay);
             };
 
@@ -815,10 +831,7 @@
             document.querySelectorAll('.bingo-cell').forEach(cell => {
                 cell.classList.remove('marked', 'locked', 'deleting', 'dimmed');
                 const token = cell.querySelector('.bingo-token');
-                if(token) {
-                    token.classList.remove('winning-token');
-                    token.style.animationDelay = '';
-                }
+                if(token) token.classList.remove('winning-token');
             });
             
             document.getElementById('game-controls').classList.add('hidden');
@@ -877,6 +890,15 @@
         }
 
         function startDrawing(e) {
+            if (activeCategoryIndex === null) {
+                const palette = document.getElementById('color-palette');
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                    btn.classList.remove('btn-attention');
+                    void btn.offsetWidth; 
+                    btn.classList.add('btn-attention');
+                });
+                return;
+            }
             isDrawing = true;
             const coords = getCoordinates(e);
             lastX = coords.x;
