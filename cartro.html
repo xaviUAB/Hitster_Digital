@@ -62,11 +62,13 @@
         }
         
         .winning-token {
-            /* CORREGIT: Eliminat background-color !important que bloquejava el canvi de color */
+            /* Forcem l'animació i l'estat visual */
             animation: winning-beat 0.8s infinite ease-in-out !important;
             z-index: 50 !important; 
+            background-color: black !important; 
             opacity: 1 !important;
             display: block !important;
+            border: 3px solid white !important;
         }
 
         @media print {
@@ -102,13 +104,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: visible; 
-            
-            /* CORRECCIÓ MÒBIL: Evitar menús contextuals natius */
+            overflow: visible; /* Permetre que surti l'animació */
             user-select: none;
             -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            
             transition: opacity 0.3s ease, filter 0.3s ease;
             z-index: 1; 
         }
@@ -347,6 +345,7 @@
     <footer class="mt-8 text-gray-500 text-xs">Una app de XRG</footer>
 
     <script>
+        // DECLARACIÓ DE VARIABLES GLOBALS (ÚNICA VEGADA)
         const CONFIG_NOVELL = [
             { color: '#4ade80', name: 'Grup o Solista' },
             { color: '#f472b6', name: 'Anterior al 2000?' },
@@ -378,7 +377,12 @@
         let audioCtx = null;
         let victoryLoopInterval;
         let confettiTimeout;
+        let confettiInterval;
+        let currentStrokeColor = "#000000";
+        let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0;
+        let audioInitialized = false;
 
+        // --- AUDIO & SISTEMA UNLOCK (MÒBIL) ---
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -387,6 +391,29 @@
                 audioCtx.resume();
             }
         }
+
+        // Aquesta funció es crida al primer toc/clic per desbloquejar l'àudio a iOS/Android
+        function unlockAudio() {
+            if (!audioInitialized) {
+                initAudio();
+                // Reproduir un silenci breu per escalfar el motor d'àudio
+                if(audioCtx) {
+                    const buffer = audioCtx.createBuffer(1, 1, 22050);
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(audioCtx.destination);
+                    source.start(0);
+                }
+                audioInitialized = true;
+                // Eliminar listeners un cop desbloquejat
+                document.removeEventListener('touchstart', unlockAudio);
+                document.removeEventListener('click', unlockAudio);
+            }
+        }
+        // Afegir listeners globals per desbloquejar
+        document.addEventListener('touchstart', unlockAudio, {passive: true});
+        document.addEventListener('click', unlockAudio);
+
 
         function playTokenSound() {
             try {
@@ -434,7 +461,7 @@
                 if (!audioCtx) initAudio();
                 const now = audioCtx.currentTime;
                 const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 659.25]; 
-                const timings = [0, 0.3, 0.6, 0.9, 1.2, 1.5]; 
+                const timings = [0, 0.15, 0.3, 0.45, 0.6, 0.75]; 
                 
                 notes.forEach((freq, i) => {
                     if (i >= timings.length) return;
@@ -570,15 +597,12 @@
 
             let touchStartTime = 0;
             
-            // CORRECCIÓ TOUCH: Afegit passive: false per poder fer preventDefault
             cell.addEventListener('touchstart', (e) => {
                 if (!isGameMode) return;
                 
                 touchStartTime = Date.now();
 
                 if (cell.classList.contains('locked')) {
-                     // Si està bloquejada, activem lògica d'esborrar i prevenim menú contextual
-                     e.preventDefault(); 
                      cell.classList.add('deleting');
                      pressTimer = setTimeout(() => {
                         cell.classList.remove('marked', 'locked', 'deleting');
@@ -590,7 +614,6 @@
                     if (activeCategoryIndex !== null) {
                          const activeColor = currentCategories[activeCategoryIndex].color.toLowerCase();
                          if (cell.dataset.color === activeColor) {
-                             // Si és la cel·la correcta, marquem a l'instant i prevenim scroll/click fantasma
                              e.preventDefault(); 
                              toggleToken();
                              touchStartTime = 0; 
@@ -691,7 +714,7 @@
                     particleCount, 
                     origin: { x: Math.random(), y: Math.random() - 0.2 } 
                 }));
-                const randomDelay = Math.random() * 1500 + 500; 
+                const randomDelay = Math.random() * 500 + 200; 
                 confettiTimeout = setTimeout(launchConfetti, randomDelay);
             };
 
@@ -702,6 +725,7 @@
             bingoAchieved = false;
             document.body.classList.remove('victory-mode');
             if (confettiTimeout) clearTimeout(confettiTimeout);
+            if (confettiInterval) clearInterval(confettiInterval);
             if (victoryLoopInterval) clearInterval(victoryLoopInterval);
         }
 
@@ -741,6 +765,10 @@
             document.querySelectorAll('.bingo-cell').forEach(cell => {
                 cell.classList.remove('dimmed');
             });
+
+            // RESET STROKE COLOR
+            currentStrokeColor = "#000000";
+            if(ctx) ctx.strokeStyle = currentStrokeColor;
             
             startCategoryAnimationLoop();
         }
@@ -773,6 +801,16 @@
                 if (idx === index) btn.classList.add('selected');
                 else btn.classList.remove('selected');
             });
+
+            // SET STROKE COLOR FOR CANVAS
+            if (cat.color === '#facc15') {
+                 currentStrokeColor = '#000000';
+            } else {
+                 currentStrokeColor = cat.color;
+            }
+            // Update context immediately if exists
+            if(ctx) ctx.strokeStyle = currentStrokeColor;
+
             clearCanvas();
         }
 
@@ -814,7 +852,10 @@
             document.querySelectorAll('.bingo-cell').forEach(cell => {
                 cell.classList.remove('marked', 'locked', 'deleting', 'dimmed');
                 const token = cell.querySelector('.bingo-token');
-                if(token) token.classList.remove('winning-token');
+                if(token) {
+                    token.classList.remove('winning-token');
+                    token.style.animationDelay = '';
+                }
             });
             
             document.getElementById('game-controls').classList.add('hidden');
@@ -827,8 +868,6 @@
             resetTitleBar();
             clearCanvas();
         }
-
-        let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0;
 
         function initCanvas() {
             canvas = document.getElementById('signature-pad');
@@ -850,8 +889,8 @@
             if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
                 canvas.width = container.clientWidth;
                 canvas.height = container.clientHeight;
-                ctx.strokeStyle = "#000";
-                ctx.lineWidth = 3;
+                ctx.strokeStyle = currentStrokeColor;
+                ctx.lineWidth = 6; // Gruix
                 ctx.lineCap = "round";
                 ctx.lineJoin = "round";
             }
@@ -873,6 +912,18 @@
         }
 
         function startDrawing(e) {
+            if (activeCategoryIndex === null) {
+                const palette = document.getElementById('color-palette');
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                    btn.classList.remove('btn-attention');
+                    void btn.offsetWidth; 
+                    btn.classList.add('btn-attention');
+                });
+                return;
+            }
+            
+            if(ctx) ctx.strokeStyle = currentStrokeColor;
+
             isDrawing = true;
             const coords = getCoordinates(e);
             lastX = coords.x;
@@ -893,14 +944,6 @@
 
         function stopDrawing() { isDrawing = false; }
         function clearCanvas() { if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); }
-
-        let audioInitialized = false;
-        document.addEventListener('click', () => {
-            if (!audioInitialized) {
-                initAudio();
-                audioInitialized = true;
-            }
-        }, { once: true });
 
         document.addEventListener('DOMContentLoaded', () => {
             generateCard();
