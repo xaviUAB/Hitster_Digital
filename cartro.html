@@ -54,21 +54,20 @@
             animation: button-pulse 1.5s infinite ease-in-out;
         }
 
-        /* ANIMACIÓ DE FITXES GUANYADORES (BATEC RÀPID) */
+        /* ANIMACIÓ DE FITXES GUANYADORES (BATEC RÀPID - BLANC I NEGRE) */
         @keyframes winning-beat {
-            0% { transform: scale(1); border-color: white; background-color: black; }
-            50% { transform: scale(1.4); border-color: #fcd34d; background-color: #fbbf24; box-shadow: 0 0 25px rgba(251, 191, 36, 1); } 
-            100% { transform: scale(1); border-color: white; background-color: black; }
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
+            50% { transform: scale(1.4); box-shadow: 0 0 25px rgba(255, 255, 255, 0.8); } 
+            100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
         }
         
         .winning-token {
-            /* Forcem l'animació i l'estat visual */
             animation: winning-beat 0.8s infinite ease-in-out !important;
             z-index: 50 !important; 
-            background-color: black !important; 
+            background-color: black !important; /* Mantenim negre */
             opacity: 1 !important;
             display: block !important;
-            border: 3px solid white !important;
+            border: 3px solid white !important; /* Mantenim vora blanca */
         }
 
         @media print {
@@ -104,7 +103,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: visible; /* Permetre que surti l'animació */
+            overflow: visible; 
             user-select: none;
             -webkit-user-select: none;
             transition: opacity 0.3s ease, filter 0.3s ease;
@@ -345,7 +344,7 @@
     <footer class="mt-8 text-gray-500 text-xs">Una app de XRG</footer>
 
     <script>
-        // DECLARACIÓ DE VARIABLES GLOBALS (ÚNICA VEGADA)
+        // --- VARIABLES GLOBALS UNIFICADES ---
         const CONFIG_NOVELL = [
             { color: '#4ade80', name: 'Grup o Solista' },
             { color: '#f472b6', name: 'Anterior al 2000?' },
@@ -392,11 +391,9 @@
             }
         }
 
-        // Aquesta funció es crida al primer toc/clic per desbloquejar l'àudio a iOS/Android
         function unlockAudio() {
             if (!audioInitialized) {
                 initAudio();
-                // Reproduir un silenci breu per escalfar el motor d'àudio
                 if(audioCtx) {
                     const buffer = audioCtx.createBuffer(1, 1, 22050);
                     const source = audioCtx.createBufferSource();
@@ -405,15 +402,12 @@
                     source.start(0);
                 }
                 audioInitialized = true;
-                // Eliminar listeners un cop desbloquejat
                 document.removeEventListener('touchstart', unlockAudio);
                 document.removeEventListener('click', unlockAudio);
             }
         }
-        // Afegir listeners globals per desbloquejar
         document.addEventListener('touchstart', unlockAudio, {passive: true});
         document.addEventListener('click', unlockAudio);
-
 
         function playTokenSound() {
             try {
@@ -808,7 +802,6 @@
             } else {
                  currentStrokeColor = cat.color;
             }
-            // Update context immediately if exists
             if(ctx) ctx.strokeStyle = currentStrokeColor;
 
             clearCanvas();
