@@ -29,7 +29,6 @@
             75% { background-color: #a78bfa; }
             100% { background-color: #22d3ee; }
         }
-        /* Fons canvia més ràpid */
         .victory-mode { animation: rainbow-bg 2s linear infinite alternate; }
         
         @keyframes shake {
@@ -63,10 +62,9 @@
         }
         
         .winning-token {
-            /* 0.8s per cicle = batec ràpid */
+            /* CORREGIT: Eliminat background-color !important que bloquejava el canvi de color */
             animation: winning-beat 0.8s infinite ease-in-out !important;
             z-index: 50 !important; 
-            background-color: black !important; 
             opacity: 1 !important;
             display: block !important;
         }
@@ -105,8 +103,12 @@
             align-items: center;
             justify-content: center;
             overflow: visible; 
+            
+            /* CORRECCIÓ MÒBIL: Evitar menús contextuals natius */
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            
             transition: opacity 0.3s ease, filter 0.3s ease;
             z-index: 1; 
         }
@@ -123,7 +125,7 @@
         .bingo-token {
             width: 70%;
             height: 70%;
-            background-color: rgba(0, 0, 0, 1); 
+            background-color: rgba(0, 0, 0, 0.25);
             border: 3px solid white;
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
@@ -138,8 +140,8 @@
         }
 
         .bingo-cell.locked .bingo-token {
-            background-color: #1f2937; 
-            border-color: #d1d5db; 
+            background-color: rgba(0, 0, 0, 0.6); 
+            border-color: #a1a1aa; 
             transform: scale(0.95);
         }
 
@@ -269,21 +271,6 @@
             transform: scale(1.75) !important; 
             box-shadow: 0 0 0 2px black, 0 0 15px rgba(255,255,255,0.6); 
             z-index: 40; 
-        }
-
-        /* Botons de Nivell */
-        .card-level-btn {
-            @apply px-8 py-3 rounded-full font-black text-lg border-2 transition-all duration-200 shadow-md uppercase tracking-wider;
-        }
-        .card-level-inactive {
-            background-color: #374151; /* gray-700 */
-            color: #9ca3af; /* gray-400 */
-        }
-        .card-level-active {
-            background-color: #22c55e; /* green-500 */
-            border-color: #14532d;
-            color: #111827;
-            transform: scale(1.05);
         }
 
         #exit-btn {
@@ -447,7 +434,7 @@
                 if (!audioCtx) initAudio();
                 const now = audioCtx.currentTime;
                 const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 659.25]; 
-                const timings = [0, 0.3, 0.6, 0.9, 1.2, 1.5]; // Ràpid
+                const timings = [0, 0.3, 0.6, 0.9, 1.2, 1.5]; 
                 
                 notes.forEach((freq, i) => {
                     if (i >= timings.length) return;
@@ -473,10 +460,8 @@
 
         function selectLevel(level) {
             selectedLevel = level;
-            
             const btnNovell = document.getElementById('btn-novell');
             const btnExpert = document.getElementById('btn-expert');
-            
             const inactiveClass = "px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 border-2 border-gray-200 bg-white text-gray-400 hover:bg-gray-50";
             const activeClass = "px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 border-2 border-green-700 bg-green-500 text-gray-900 shadow-md transform scale-105";
 
@@ -553,7 +538,6 @@
                 
                 if (activeCategoryIndex === null) {
                     const palette = document.getElementById('color-palette');
-                    // Trigger visual cue
                     document.querySelectorAll('.color-btn').forEach(btn => {
                         btn.classList.remove('btn-attention');
                         void btn.offsetWidth; 
@@ -586,19 +570,15 @@
 
             let touchStartTime = 0;
             
+            // CORRECCIÓ TOUCH: Afegit passive: false per poder fer preventDefault
             cell.addEventListener('touchstart', (e) => {
                 if (!isGameMode) return;
-                
-                // Si no hi ha categoria, preventDefault per evitar accions extranyes i mostrar l'avís
-                if (activeCategoryIndex === null) {
-                    e.preventDefault();
-                    toggleToken(); // Això dispararà l'avís visual
-                    return;
-                }
                 
                 touchStartTime = Date.now();
 
                 if (cell.classList.contains('locked')) {
+                     // Si està bloquejada, activem lògica d'esborrar i prevenim menú contextual
+                     e.preventDefault(); 
                      cell.classList.add('deleting');
                      pressTimer = setTimeout(() => {
                         cell.classList.remove('marked', 'locked', 'deleting');
@@ -607,14 +587,17 @@
                         touchStartTime = 0; 
                      }, 2000);
                 } else {
-                     const activeColor = currentCategories[activeCategoryIndex].color.toLowerCase();
-                     if (cell.dataset.color === activeColor) {
-                         e.preventDefault(); 
-                         toggleToken();
-                         touchStartTime = 0; 
-                     }
+                    if (activeCategoryIndex !== null) {
+                         const activeColor = currentCategories[activeCategoryIndex].color.toLowerCase();
+                         if (cell.dataset.color === activeColor) {
+                             // Si és la cel·la correcta, marquem a l'instant i prevenim scroll/click fantasma
+                             e.preventDefault(); 
+                             toggleToken();
+                             touchStartTime = 0; 
+                         }
+                    }
                 }
-            });
+            }, { passive: false });
 
             cell.addEventListener('touchend', (e) => {
                 if (pressTimer) clearTimeout(pressTimer);
@@ -696,7 +679,7 @@
             
             playVictoryLoop();
             if (victoryLoopInterval) clearInterval(victoryLoopInterval);
-            victoryLoopInterval = setInterval(playVictoryLoop, 2500); // Melodia cada 2.5s (coincideix aproximadament amb la durada)
+            victoryLoopInterval = setInterval(playVictoryLoop, 2500); 
 
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
 
@@ -708,7 +691,7 @@
                     particleCount, 
                     origin: { x: Math.random(), y: Math.random() - 0.2 } 
                 }));
-                const randomDelay = Math.random() * 800 + 200; // Més ràpid (0.2s - 1.0s)
+                const randomDelay = Math.random() * 1500 + 500; 
                 confettiTimeout = setTimeout(launchConfetti, randomDelay);
             };
 
@@ -890,15 +873,6 @@
         }
 
         function startDrawing(e) {
-            if (activeCategoryIndex === null) {
-                const palette = document.getElementById('color-palette');
-                document.querySelectorAll('.color-btn').forEach(btn => {
-                    btn.classList.remove('btn-attention');
-                    void btn.offsetWidth; 
-                    btn.classList.add('btn-attention');
-                });
-                return;
-            }
             isDrawing = true;
             const coords = getCoordinates(e);
             lastX = coords.x;
